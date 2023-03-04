@@ -32,10 +32,6 @@ jobs:
       run: go build -o vuln-list-update .
 
     - if: always()
-      name: NVD
-      run: ./vuln-list-update -target nvd
-
-    - if: always()
       name: Alpine Issue Tracker
       run: ./vuln-list-update -target alpine
 
@@ -68,14 +64,6 @@ jobs:
       run: ./vuln-list-update -target photon
 
     - if: always()
-      name: GitHub Security Advisory
-      run: ./vuln-list-update -target ghsa
-
-    - if: always()
-      name: CWE
-      run: ./vuln-list-update -target cwe
-
-    - if: always()
       name: SUSE CVRF
       run: ./vuln-list-update -target suse-cvrf
 
@@ -98,14 +86,6 @@ jobs:
     - if: always()
       name: CBL-Mariner Vulnerability Data
       run: ./vuln-list-update -target mariner
-
-    - if: always()
-      name: OSV Database
-      run: ./vuln-list-update -target osv
-
-    - if: always()
-      name: Go Vulnerability Database
-      run: ./vuln-list-update -target go-vulndb
 
     - if: always()
       name: Wolfi Secdb
