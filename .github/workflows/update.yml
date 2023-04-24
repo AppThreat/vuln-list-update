@@ -12,7 +12,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     steps:
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v4
       with:
         go-version: 1.18
 
@@ -90,6 +90,10 @@ jobs:
     - if: always()
       name: Wolfi Secdb
       run: ./vuln-list-update -target wolfi
+
+    - if: always()
+      name: Chainguard Secdb
+      run: ./vuln-list-update -target chainguard
 
     - if: always()
       name: Known Exploited Vulnerabilities Catalog
