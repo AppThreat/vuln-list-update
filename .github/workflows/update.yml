@@ -12,7 +12,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     steps:
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: 1.18
 
@@ -142,5 +142,5 @@ jobs:
       run: ./vuln-list-update -target redhat -years 2018
 
     - if: always()
-      name: Red Hat Security Data API 2019-2023
-      run: ./vuln-list-update -target redhat -years 2019,2020,2021,2022,2023
+      name: Red Hat Security Data API 2019-2024
+      run: ./vuln-list-update -target redhat -years 2019,2020,2021,2022,2023,2024
