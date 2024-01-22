@@ -19,7 +19,7 @@ import (
 const (
 	retry             = 50
 	url20             = "https://services.nvd.nist.gov/rest/json/cves/2.0/"
-	apiDir            = "api"
+	apiDir            = "nvd"
 	nvdTimeFormat     = "2006-01-02T15:04:05"
 	maxResultsPerPage = 2000
 	retryAfter        = 30 * time.Second
