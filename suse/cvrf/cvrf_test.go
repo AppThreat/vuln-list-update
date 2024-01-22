@@ -13,7 +13,7 @@ import (
 
 	"github.com/spf13/afero"
 
-	"github.com/aquasecurity/vuln-list-update/suse/cvrf"
+	"github.com/appthreat/vuln-list-update/suse/cvrf"
 )
 
 var update = flag.Bool("update", false, "update golden files")

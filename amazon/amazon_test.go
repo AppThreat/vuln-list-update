@@ -12,7 +12,7 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"github.com/aquasecurity/vuln-list-update/amazon"
+	"github.com/appthreat/vuln-list-update/amazon"
 	"github.com/stretchr/testify/assert"
 )
 

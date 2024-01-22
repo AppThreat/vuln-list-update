@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aquasecurity/vuln-list-update/oracle/oval"
+	"github.com/appthreat/vuln-list-update/oracle/oval"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/spf13/afero"

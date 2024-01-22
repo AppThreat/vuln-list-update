@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	alpine "github.com/aquasecurity/vuln-list-update/alpine-unfixed"
+	alpine "github.com/appthreat/vuln-list-update/alpine-unfixed"
 )
 
 func TestUpdater_Update(t *testing.T) {

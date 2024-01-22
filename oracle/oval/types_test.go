@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/aquasecurity/vuln-list-update/oracle/oval"
+	"github.com/appthreat/vuln-list-update/oracle/oval"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

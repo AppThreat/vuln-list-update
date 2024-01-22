@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aquasecurity/vuln-list-update/debian/tracker"
+	"github.com/appthreat/vuln-list-update/debian/tracker"
 )
 
 type pkgDetail struct {

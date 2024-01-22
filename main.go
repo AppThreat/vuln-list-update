@@ -10,36 +10,36 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aquasecurity/vuln-list-update/chainguard"
-	"github.com/aquasecurity/vuln-list-update/kevc"
-	"github.com/aquasecurity/vuln-list-update/wolfi"
+	"github.com/appthreat/vuln-list-update/chainguard"
+	"github.com/appthreat/vuln-list-update/kevc"
+	"github.com/appthreat/vuln-list-update/wolfi"
 
 	githubql "github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
 
-	"github.com/aquasecurity/vuln-list-update/alma"
-	"github.com/aquasecurity/vuln-list-update/alpine"
-	alpineunfixed "github.com/aquasecurity/vuln-list-update/alpine-unfixed"
-	"github.com/aquasecurity/vuln-list-update/amazon"
-	arch_linux "github.com/aquasecurity/vuln-list-update/arch"
-	"github.com/aquasecurity/vuln-list-update/cwe"
-	"github.com/aquasecurity/vuln-list-update/debian/tracker"
-	"github.com/aquasecurity/vuln-list-update/ghsa"
-	"github.com/aquasecurity/vuln-list-update/git"
-	"github.com/aquasecurity/vuln-list-update/glad"
-	govulndb "github.com/aquasecurity/vuln-list-update/go-vulndb"
-	"github.com/aquasecurity/vuln-list-update/mariner"
-	"github.com/aquasecurity/vuln-list-update/nvd"
-	oracleoval "github.com/aquasecurity/vuln-list-update/oracle/oval"
-	"github.com/aquasecurity/vuln-list-update/osv"
-	"github.com/aquasecurity/vuln-list-update/photon"
-	redhatoval "github.com/aquasecurity/vuln-list-update/redhat/oval"
-	"github.com/aquasecurity/vuln-list-update/redhat/securitydataapi"
-	"github.com/aquasecurity/vuln-list-update/rocky"
-	susecvrf "github.com/aquasecurity/vuln-list-update/suse/cvrf"
-	"github.com/aquasecurity/vuln-list-update/ubuntu"
-	"github.com/aquasecurity/vuln-list-update/utils"
+	"github.com/appthreat/vuln-list-update/alma"
+	"github.com/appthreat/vuln-list-update/alpine"
+	alpineunfixed "github.com/appthreat/vuln-list-update/alpine-unfixed"
+	"github.com/appthreat/vuln-list-update/amazon"
+	arch_linux "github.com/appthreat/vuln-list-update/arch"
+	"github.com/appthreat/vuln-list-update/cwe"
+	"github.com/appthreat/vuln-list-update/debian/tracker"
+	"github.com/appthreat/vuln-list-update/ghsa"
+	"github.com/appthreat/vuln-list-update/git"
+	"github.com/appthreat/vuln-list-update/glad"
+	govulndb "github.com/appthreat/vuln-list-update/go-vulndb"
+	"github.com/appthreat/vuln-list-update/mariner"
+	"github.com/appthreat/vuln-list-update/nvd"
+	oracleoval "github.com/appthreat/vuln-list-update/oracle/oval"
+	"github.com/appthreat/vuln-list-update/osv"
+	"github.com/appthreat/vuln-list-update/photon"
+	redhatoval "github.com/appthreat/vuln-list-update/redhat/oval"
+	"github.com/appthreat/vuln-list-update/redhat/securitydataapi"
+	"github.com/appthreat/vuln-list-update/rocky"
+	susecvrf "github.com/appthreat/vuln-list-update/suse/cvrf"
+	"github.com/appthreat/vuln-list-update/ubuntu"
+	"github.com/appthreat/vuln-list-update/utils"
 )
 
 const (
@@ -93,7 +93,8 @@ func run() error {
 	var commitMsg string
 	switch *target {
 	case "nvd":
-		if err := nvd.Update(now.Year()); err != nil {
+		u := nvd.NewUpdater()
+		if err := u.Update(); err != nil {
 			return xerrors.Errorf("NVD update error: %w", err)
 		}
 		commitMsg = "NVD"
