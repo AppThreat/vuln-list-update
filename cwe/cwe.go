@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aquasecurity/vuln-list-update/utils"
+	"github.com/appthreat/vuln-list-update/utils"
 	"golang.org/x/xerrors"
 )
 

@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aquasecurity/vuln-list-update/wolfi"
+	"github.com/appthreat/vuln-list-update/wolfi"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

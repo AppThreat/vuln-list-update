@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aquasecurity/vuln-list-update/utils"
+	"github.com/appthreat/vuln-list-update/utils"
 	"github.com/cheggaaa/pb"
 	githubql "github.com/shurcooL/githubv4"
 	"github.com/shurcooL/graphql"

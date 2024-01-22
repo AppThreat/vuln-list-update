@@ -1,4 +1,4 @@
-module github.com/aquasecurity/vuln-list-update
+module github.com/appthreat/vuln-list-update
 
 go 1.18
 

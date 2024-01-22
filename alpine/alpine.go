@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 
-	"github.com/aquasecurity/vuln-list-update/utils"
+	"github.com/appthreat/vuln-list-update/utils"
 )
 
 const (
