@@ -80,11 +80,7 @@ jobs:
 
     - if: always()
       name: Rocky Linux Security Advisory
-      run: ./vuln-list-update -target rocky
-
-    - if: always()
-      name: CBL-Mariner Vulnerability Data
-      run: ./vuln-list-update -target mariner
+      run: ./vuln-list-update -target rocky    
 
     - if: always()
       name: Wolfi Secdb
