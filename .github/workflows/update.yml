@@ -28,15 +28,7 @@ jobs:
         git config --global user.name "GitHub Action"
 
     - name: Compile vuln-list-update
-      run: go build -o vuln-list-update .
-
-    - if: always()
-      name: Alpine Issue Tracker
-      run: ./vuln-list-update -target alpine
-
-    - if: always()
-      name: Alpine Unfixed Vulnerability Tracker
-      run: ./vuln-list-update -target alpine-unfixed
+      run: go build -o vuln-list-update .    
 
     - if: always()
       name: Debian Security Bug Tracker
@@ -49,14 +41,6 @@ jobs:
     - if: always()
       name: Amazon Linux AMI Security Advisory
       run: ./vuln-list-update -target amazon
-
-    - if: always()
-      name: Oracle Linux OVAL
-      run: ./vuln-list-update -target oracle-oval
-
-    - if: always()
-      name: Red Hat OVALv2
-      run: ./vuln-list-update -target redhat-oval
 
     - if: always()
       name: Photon CVE Advisory
