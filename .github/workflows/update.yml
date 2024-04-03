@@ -31,6 +31,14 @@ jobs:
       run: go build -o vuln-list-update .    
 
     - if: always()
+      name: Alpine Issue Tracker
+      run: ./vuln-list-update -target alpine
+
+    - if: always()
+      name: Alpine Unfixed Vulnerability Tracker
+      run: ./vuln-list-update -target alpine-unfixed
+      
+    - if: always()
       name: Debian Security Bug Tracker
       run: ./vuln-list-update -target debian
 
