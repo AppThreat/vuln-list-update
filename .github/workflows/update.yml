@@ -83,6 +83,21 @@ jobs:
       run: ./vuln-list-update -target kevc
 
     - if: always()
+      name: Red Hat Security Data API 2024
+      run: ./vuln-list-update -target redhat -years 2024
+
+    - if: always()
+      name: Red Hat Security Data API 2023
+      run: ./vuln-list-update -target redhat -years 2023
+    
+    - if: always()
+      name: Red Hat Security Data API 2022
+      run: ./vuln-list-update -target redhat -years 2022
+    - if: always()
+      name: Red Hat Security Data API 2019-2024
+      run: ./vuln-list-update -target redhat -years 2019,2020,2021   
+      
+    - if: always()
       name: Red Hat Security Data API 2014
       run: ./vuln-list-update -target redhat -years 2014
 
@@ -102,6 +117,4 @@ jobs:
       name: Red Hat Security Data API 2018
       run: ./vuln-list-update -target redhat -years 2018
 
-    - if: always()
-      name: Red Hat Security Data API 2019-2024
-      run: ./vuln-list-update -target redhat -years 2019,2020,2021,2022,2023,2024
+    
