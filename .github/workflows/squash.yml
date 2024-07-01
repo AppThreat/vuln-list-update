@@ -3,7 +3,7 @@ name: Squash vuln-list repo
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 1 * *'
+    - cron: '20 0 1 * *'
 
 jobs:
   build:

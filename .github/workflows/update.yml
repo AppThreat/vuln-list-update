@@ -1,7 +1,7 @@
 name: Update vuln-list repo
 on:
   schedule:
-  - cron: "0 */6 * * *"
+  - cron: "32 */6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
         git config --global user.name "GitHub Action"
 
     - name: Compile vuln-list-update
-      run: go build -o vuln-list-update .    
+      run: go build -o vuln-list-update .
 
     - if: always()
       name: Alpine Issue Tracker
@@ -37,7 +37,7 @@ jobs:
     - if: always()
       name: Alpine Unfixed Vulnerability Tracker
       run: ./vuln-list-update -target alpine-unfixed
-      
+
     - if: always()
       name: Debian Security Bug Tracker
       run: ./vuln-list-update -target debian
@@ -68,7 +68,7 @@ jobs:
 
     - if: always()
       name: Rocky Linux Security Advisory
-      run: ./vuln-list-update -target rocky    
+      run: ./vuln-list-update -target rocky
 
     - if: always()
       name: Wolfi Secdb
@@ -89,14 +89,14 @@ jobs:
     - if: always()
       name: Red Hat Security Data API 2023
       run: ./vuln-list-update -target redhat -years 2023
-    
+
     - if: always()
       name: Red Hat Security Data API 2022
       run: ./vuln-list-update -target redhat -years 2022
     - if: always()
       name: Red Hat Security Data API 2019-2021
-      run: ./vuln-list-update -target redhat -years 2019,2020,2021   
-      
+      run: ./vuln-list-update -target redhat -years 2019,2020,2021
+
     - if: always()
       name: Red Hat Security Data API 2014
       run: ./vuln-list-update -target redhat -years 2014
@@ -117,4 +117,4 @@ jobs:
       name: Red Hat Security Data API 2018
       run: ./vuln-list-update -target redhat -years 2018
 
-    
+
