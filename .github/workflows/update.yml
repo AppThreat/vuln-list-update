@@ -16,7 +16,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     steps:
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
@@ -120,3 +120,14 @@ jobs:
     - if: always()
       name: SUSE CVRF
       run: ./vuln-list-update -target suse-cvrf
+      
+  keepalive-job:
+    name: Keepalive Workflow
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
+        with:
+          workflow_files: "update.yml, nvd.yml, squash.yml"
