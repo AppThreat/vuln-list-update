@@ -120,3 +120,4 @@ jobs:
     - if: always()
       name: SUSE CVRF
       run: ./vuln-list-update -target suse-cvrf
+
