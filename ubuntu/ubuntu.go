@@ -26,6 +26,7 @@ const (
 var (
 	repoURLs = []string{
 		"https://git.launchpad.net/ubuntu-cve-tracker",
+		"git+ssh://git.launchpad.net/ubuntu-cve-tracker",
 		"git://git.launchpad.net/ubuntu-cve-tracker",
 	}
 	targets = []string{
