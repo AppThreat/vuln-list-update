@@ -80,13 +80,10 @@ jobs:
       name: Chainguard Secdb
       run: ./vuln-list-update -target chainguard
 
-    - if: always()
-      name: Known Exploited Vulnerabilities Catalog
-      run: ./vuln-list-update -target kevc
 
     - if: always()
-      name: Red Hat Security Data API 2024-2025
-      run: ./vuln-list-update -target redhat -years 2024,2025
+      name: Red Hat Security Data API 2024-2026
+      run: ./vuln-list-update -target redhat -years 2024,2025,2026
 
     - if: always()
       name: Red Hat Security Data API 2023
@@ -98,14 +95,6 @@ jobs:
     - if: always()
       name: Red Hat Security Data API 2019-2021
       run: ./vuln-list-update -target redhat -years 2019,2020,2021
-
-    - if: always()
-      name: Red Hat Security Data API 2014
-      run: ./vuln-list-update -target redhat -years 2014
-
-    - if: always()
-      name: Red Hat Security Data API 2015
-      run: ./vuln-list-update -target redhat -years 2015
 
     - if: always()
       name: Red Hat Security Data API 2016

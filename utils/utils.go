@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/parnurzeal/gorequest"
@@ -80,11 +81,13 @@ func Write(filePath string, data interface{}) error {
 	return nil
 }
 
-// GenWorkers generate workders
-func GenWorkers(num, wait int) chan<- func() {
+// GenWorkers generate workers
+func GenWorkers(num, wait int, wg *sync.WaitGroup) chan<- func() {
 	tasks := make(chan func())
 	for i := 0; i < num; i++ {
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			for f := range tasks {
 				f()
 				time.Sleep(time.Duration(wait) * time.Second)
@@ -151,9 +154,6 @@ func FetchConcurrently(urls []string, concurrency, wait, retry int) (responses [
 	reqChan := make(chan string, len(urls))
 	resChan := make(chan []byte, len(urls))
 	errChan := make(chan error, len(urls))
-	defer close(reqChan)
-	defer close(resChan)
-	defer close(errChan)
 
 	go func() {
 		for _, url := range urls {
@@ -161,10 +161,14 @@ func FetchConcurrently(urls []string, concurrency, wait, retry int) (responses [
 		}
 	}()
 
+	timer := time.NewTimer(10 * 60 * time.Second)
+	defer timer.Stop()
+
 	bar := pb.StartNew(len(urls))
-	tasks := GenWorkers(concurrency, wait)
+	var wg sync.WaitGroup
+	tasks := GenWorkers(concurrency, wait, &wg)
 	for range urls {
-		tasks <- func() {
+		fn := func() {
 			url := <-reqChan
 			res, err := FetchURL(url, "", retry)
 			if err != nil {
@@ -173,25 +177,40 @@ func FetchConcurrently(urls []string, concurrency, wait, retry int) (responses [
 			}
 			resChan <- res
 		}
+		select {
+		case tasks <- fn:
+		case <-timer.C:
+			close(tasks)
+			return nil, xerrors.New("Timeout Fetching URL")
+		}
 		bar.Increment()
 	}
 	bar.Finish()
+	close(tasks)
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-timer.C:
+		return nil, xerrors.New("Timeout Fetching URL")
+	}
 
 	var errs []error
-	timeout := time.After(10 * 60 * time.Second)
 	for range urls {
 		select {
 		case res := <-resChan:
 			responses = append(responses, res)
 		case err := <-errChan:
 			errs = append(errs, err)
-		case <-timeout:
-			return nil, xerrors.New("Timeout Fetching URL")
 		}
 	}
-	if 0 < len(errs) {
+	if len(errs) > 0 {
 		return responses, fmt.Errorf("%s", errs)
-
 	}
 	return responses, nil
 }

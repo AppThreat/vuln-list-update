@@ -159,12 +159,21 @@ func (u Updater) fetchURL(url string) (io.ReadCloser, error) {
 			continue
 		}
 		switch resp.StatusCode {
-		case http.StatusForbidden:
+		case http.StatusForbidden, http.StatusTooManyRequests:
 			slog.Error("NVD rate limit. Wait to gain access.")
+			ra := u.retryAfter
+			// NVD returns the `Retry-After` header as 0.
+			// But if they start setting a non-zero value, we can use that duration.
+			if headerRetry := resp.Header.Get("Retry-After"); headerRetry != "" && headerRetry != "0" {
+				hRetry, err := time.ParseDuration(headerRetry + "s")
+				if err == nil {
+					ra = hRetry
+				}
+			}
 			// NVD limits:
 			// Without API key: 5 requests / 30 seconds window
 			// With API key: 50 requests / 30 seconds window
-			time.Sleep(u.retryAfter)
+			time.Sleep(ra)
 			continue
 		case http.StatusServiceUnavailable, http.StatusRequestTimeout, http.StatusBadGateway, http.StatusGatewayTimeout:
 			slog.Error("NVD API is unstable. Try to fetch URL again.", slog.String("status_code", resp.Status))
@@ -193,16 +202,16 @@ func TimeIntervals(endTime time.Time) ([]TimeInterval, error) {
 	for endTime.Sub(lastUpdatedDate).Hours()/24 > 120 {
 		newLastUpdatedDate := lastUpdatedDate.Add(120 * 24 * time.Hour)
 		intervals = append(intervals, TimeInterval{
-			LastModStartDate: lastUpdatedDate.Format(time.RFC3339),
-			LastModEndDate:   newLastUpdatedDate.Format(time.RFC3339),
+			LastModStartDate: lastUpdatedDate.UTC().Format(time.RFC3339),
+			LastModEndDate:   newLastUpdatedDate.UTC().Format(time.RFC3339),
 		})
 		lastUpdatedDate = newLastUpdatedDate
 	}
 
 	// fill latest interval
 	intervals = append(intervals, TimeInterval{
-		LastModStartDate: lastUpdatedDate.Format(time.RFC3339),
-		LastModEndDate:   endTime.Format(time.RFC3339),
+		LastModStartDate: lastUpdatedDate.UTC().Format(time.RFC3339),
+		LastModEndDate:   endTime.UTC().Format(time.RFC3339),
 	})
 
 	return intervals, nil

@@ -14,9 +14,7 @@ const (
 	lastUpdatedFile = "last_updated.json"
 )
 
-var (
-	lastUpdatedFilePath = filepath.Join(VulnListDir(), lastUpdatedFile)
-)
+
 
 type LastUpdated map[string]time.Time
 
@@ -35,6 +33,7 @@ func GetLastUpdatedDate(dist string) (time.Time, error) {
 }
 
 func getLastUpdatedDate() (map[string]time.Time, error) {
+	lastUpdatedFilePath := filepath.Join(VulnListDir(), lastUpdatedFile)
 	lastUpdated := LastUpdated{}
 	if _, err := os.Stat(lastUpdatedFilePath); os.IsNotExist(err) {
 		return lastUpdated, nil
@@ -59,6 +58,7 @@ func SetLastUpdatedDate(dist string, lastUpdatedDate time.Time) error {
 	}
 	lastUpdated[dist] = lastUpdatedDate
 
+	lastUpdatedFilePath := filepath.Join(VulnListDir(), lastUpdatedFile)
 	b, err := json.MarshalIndent(lastUpdated, "", "  ")
 	if err != nil {
 		return err

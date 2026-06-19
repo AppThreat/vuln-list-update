@@ -41,9 +41,9 @@ func TestUpdate(t *testing.T) {
 			},
 			respStatus: 200,
 			wantFiles: []string{
-				filepath.Join("api", "2020", "CVE-2020-8167.json"),
-				filepath.Join("api", "2021", "CVE-2021-22903.json"),
-				filepath.Join("api", "2021", "CVE-2021-3881.json"),
+				filepath.Join("nvd", "2020", "CVE-2020-8167.json"),
+				filepath.Join("nvd", "2021", "CVE-2021-22903.json"),
+				filepath.Join("nvd", "2021", "CVE-2021-3881.json"),
 				"last_updated.json",
 			},
 		},
@@ -60,9 +60,9 @@ func TestUpdate(t *testing.T) {
 			},
 			respStatus: 403,
 			wantFiles: []string{
-				filepath.Join("api", "2020", "CVE-2020-8167.json"),
-				filepath.Join("api", "2021", "CVE-2021-22903.json"),
-				filepath.Join("api", "2021", "CVE-2021-3881.json"),
+				filepath.Join("nvd", "2020", "CVE-2020-8167.json"),
+				filepath.Join("nvd", "2021", "CVE-2021-22903.json"),
+				filepath.Join("nvd", "2021", "CVE-2021-3881.json"),
 				"last_updated.json",
 			},
 		},
@@ -78,9 +78,9 @@ func TestUpdate(t *testing.T) {
 			},
 			respStatus: 200,
 			wantFiles: []string{
-				filepath.Join("api", "2020", "CVE-2020-8167.json"),
-				filepath.Join("api", "2021", "CVE-2021-22903.json"),
-				filepath.Join("api", "2021", "CVE-2021-3881.json"),
+				filepath.Join("nvd", "2020", "CVE-2020-8167.json"),
+				filepath.Join("nvd", "2021", "CVE-2021-22903.json"),
+				filepath.Join("nvd", "2021", "CVE-2021-3881.json"),
 				"last_updated.json",
 			},
 		},
@@ -135,7 +135,7 @@ func TestUpdate(t *testing.T) {
 			defer utils.SetVulnListDir(savedVulnListDir)
 
 			// create last_updated.json file into temp dir
-			err := utils.SetLastUpdatedDate("api", tt.lastUpdatedTime)
+			err := utils.SetLastUpdatedDate("nvd", tt.lastUpdatedTime)
 			require.NoError(t, err)
 
 			respStatus := tt.respStatus
@@ -252,7 +252,7 @@ func TestTimeIntervals(t *testing.T) {
 
 			if tt.lastUpdatedTime != time.Unix(0, 0) {
 				// create last_updated.json file into temp dir
-				err := utils.SetLastUpdatedDate("api", tt.lastUpdatedTime)
+				err := utils.SetLastUpdatedDate("nvd", tt.lastUpdatedTime)
 				assert.NoError(t, err)
 			}
 

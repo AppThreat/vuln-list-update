@@ -35,6 +35,8 @@ jobs:
     - name: Squash and push
       run: |
         cd vuln-list
-        git replace -f --graft $(git rev-list --max-parents=0 HEAD)
+        for commit in $(git rev-list --max-parents=0 HEAD); do
+          git replace -f --graft $commit
+        done
         git filter-repo --force
         git push --force --set-upstream https://${{ secrets.ACCESS_TOKEN }}@github.com/${{ github.repository_owner }}/vuln-list.git main
