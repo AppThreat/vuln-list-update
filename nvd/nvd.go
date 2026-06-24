@@ -98,11 +98,15 @@ func (u Updater) Update() error {
 			}
 			slog.Info("Fetched NVD entries", slog.Int("total", totalResults), slog.Int("start_index", startIndex))
 		}
-	}
 
-	// Update last_updated.json at the end.
-	if err = utils.SetLastUpdatedDate(apiDir, u.lastModEndDate); err != nil {
-		return xerrors.Errorf("unable to update last_updated.json file: %w", err)
+		// Update last_updated.json after each successfully processed interval
+		intervalEnd, err := time.Parse(time.RFC3339, interval.LastModEndDate)
+		if err != nil {
+			return xerrors.Errorf("unable to parse interval end date %q: %w", interval.LastModEndDate, err)
+		}
+		if err = utils.SetLastUpdatedDate(apiDir, intervalEnd); err != nil {
+			return xerrors.Errorf("unable to update last_updated.json file: %w", err)
+		}
 	}
 
 	return nil
@@ -128,23 +132,30 @@ func (u Updater) saveEntry(interval TimeInterval, startIndex int) (int, error) {
 
 func (u Updater) fetchEntry(url string) (Entry, error) {
 	var entry Entry
-	r, err := u.fetchURL(url)
+	b, err := u.fetchURL(url)
 	if err != nil {
 		return Entry{}, xerrors.Errorf("unable to fetch: %w", err)
-	} else if r == nil {
-		return Entry{}, xerrors.Errorf("unable to get entry from %q", url)
 	}
-	defer r.Close()
 
-	if err = json.NewDecoder(r).Decode(&entry); err != nil {
+	if err = json.Unmarshal(b, &entry); err != nil {
 		return Entry{}, xerrors.Errorf("unable to decode response for %q: %w", url, err)
 	}
 	return entry, nil
 }
 
-func (u Updater) fetchURL(url string) (io.ReadCloser, error) {
+func (u Updater) fetchURL(url string) ([]byte, error) {
 	var c http.Client
 	for i := 0; i <= u.retry; i++ {
+		var retryDelay time.Duration
+		if i > 2 {
+			retryDelay = 60 * time.Second
+		} else {
+			retryDelay = time.Duration(15<<uint(i)) * time.Second
+			if retryDelay > 60*time.Second {
+				retryDelay = 60 * time.Second
+			}
+		}
+
 		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
 			return nil, xerrors.Errorf("unable to build request for %q: %w", url, err)
@@ -156,36 +167,51 @@ func (u Updater) fetchURL(url string) (io.ReadCloser, error) {
 		resp, err := c.Do(req)
 		if err != nil {
 			slog.Error("Response error. Try to get the entry again.", slog.String("error", err.Error()))
-			continue
-		}
-		switch resp.StatusCode {
-		case http.StatusForbidden, http.StatusTooManyRequests:
-			slog.Error("NVD rate limit. Wait to gain access.")
-			ra := u.retryAfter
-			// NVD returns the `Retry-After` header as 0.
-			// But if they start setting a non-zero value, we can use that duration.
-			if headerRetry := resp.Header.Get("Retry-After"); headerRetry != "" && headerRetry != "0" {
-				hRetry, err := time.ParseDuration(headerRetry + "s")
-				if err == nil {
-					ra = hRetry
-				}
+			if i < u.retry {
+				time.Sleep(retryDelay)
 			}
-			// NVD limits:
-			// Without API key: 5 requests / 30 seconds window
-			// With API key: 50 requests / 30 seconds window
-			time.Sleep(ra)
 			continue
-		case http.StatusServiceUnavailable, http.StatusRequestTimeout, http.StatusBadGateway, http.StatusGatewayTimeout:
-			slog.Error("NVD API is unstable. Try to fetch URL again.", slog.String("status_code", resp.Status))
-			// NVD API works unstable
-			time.Sleep(time.Duration(i) * time.Second)
-			continue
-		case http.StatusOK:
-			return resp.Body, nil
-		default:
-			return nil, xerrors.Errorf("unexpected status code: %s", resp.Status)
 		}
 
+		switch {
+		case resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests:
+			_ = resp.Body.Close()
+			slog.Error("NVD rate limit. Wait to gain access.")
+			if i < u.retry {
+				ra := u.retryAfter
+				// NVD returns the `Retry-After` header as 0.
+				// But if they start setting a non-zero value, we can use that duration.
+				if headerRetry := resp.Header.Get("Retry-After"); headerRetry != "" && headerRetry != "0" {
+					hRetry, err := time.ParseDuration(headerRetry + "s")
+					if err == nil {
+						ra = hRetry
+					}
+				}
+				time.Sleep(ra)
+			}
+			continue
+		case resp.StatusCode == http.StatusRequestTimeout || (resp.StatusCode >= 500 && resp.StatusCode < 600):
+			_ = resp.Body.Close()
+			slog.Error("NVD API is unstable. Try to fetch URL again.", slog.String("status_code", resp.Status))
+			if i < u.retry {
+				time.Sleep(retryDelay)
+			}
+			continue
+		case resp.StatusCode == http.StatusOK:
+			body, err := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			if err != nil {
+				slog.Error("Body read error. Try to get the entry again.", slog.String("error", err.Error()))
+				if i < u.retry {
+					time.Sleep(retryDelay)
+				}
+				continue
+			}
+			return body, nil
+		default:
+			_ = resp.Body.Close()
+			return nil, xerrors.Errorf("unexpected status code: %s", resp.Status)
+		}
 	}
 	return nil, xerrors.Errorf("unable to fetch url. Retry limit exceeded.")
 }

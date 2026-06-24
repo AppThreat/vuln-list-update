@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"flag"
 	"fmt"
 	"log"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/appthreat/vuln-list-update/chainguard"
 	"github.com/appthreat/vuln-list-update/wolfi"
-
 
 	"golang.org/x/xerrors"
 
@@ -166,7 +164,6 @@ func run() error {
 			return xerrors.Errorf("Rocky Linux update error: %w", err)
 		}
 		commitMsg = "Rocky Linux Security Advisory"
-
 
 	case "wolfi":
 		wu := wolfi.NewUpdater()

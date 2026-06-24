@@ -14,8 +14,6 @@ const (
 	lastUpdatedFile = "last_updated.json"
 )
 
-
-
 type LastUpdated map[string]time.Time
 
 func GetLastUpdatedDate(dist string) (time.Time, error) {

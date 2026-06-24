@@ -96,7 +96,7 @@ func (c Config) saveCVEPerPkg(dirName, pkgName, cveID string, data interface{}) 
 		log.Printf("CVE-ID is empty")
 		return nil
 	}
-	if (strings.HasPrefix(cveID, "UNK-") || cveID == "Re") {		
+	if strings.HasPrefix(cveID, "UNK-") || cveID == "Re" {
 		return nil
 	}
 

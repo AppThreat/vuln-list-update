@@ -285,7 +285,7 @@ func parse(r io.Reader) (vuln *Vulnerability, err error) {
 			}
 			continue
 		}
-		
+
 		// Parse Patches
 		// e.g. trusty/esm_vnc4: needs-triage
 		s := strings.SplitN(line, ":", 2)
