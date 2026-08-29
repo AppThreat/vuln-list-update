@@ -1,0 +1,52 @@
+name: Keep scheduled workflows enabled
+on:
+  schedule:
+  - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: vuln-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  keepalive:
+    name: Keep scheduled workflows enabled
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      INACTIVITY_THRESHOLD_DAYS: 30
+    steps:
+    - name: Check out code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Commit keepalive file if the repo is inactive
+      shell: bash
+      run: |
+        last_commit_ts=$(git log -1 --pretty=format:%ct)
+        now_ts=$(date +%s)
+        age_days=$(( (now_ts - last_commit_ts) / 86400 ))
+        echo "Last commit on ${GITHUB_REF_NAME} is ${age_days} day(s) old (threshold: ${INACTIVITY_THRESHOLD_DAYS} days)."
+
+        if [ "${age_days}" -lt "${INACTIVITY_THRESHOLD_DAYS}" ]; then
+          echo "Repository has recent activity; keepalive commit not needed."
+          exit 0
+        fi
+
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
+
+        cat > .keepalive <<EOF
+        This file is updated automatically by the keepalive workflow
+        (.github/workflows/keepalive.yml) to prevent GitHub from disabling the
+        scheduled workflows in this repository after 60 days of inactivity.
+        Do not delete it.
+
+        Last keepalive commit: $(date -u '+%Y-%m-%dT%H:%M:%SZ')
+        EOF
+
+        git add .keepalive
+        git commit -m "Keep scheduled workflows enabled [skip ci]"
+        git push "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
