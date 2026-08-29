@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: vuln-${{ github.head_ref || github.run_id }}
+  group: vuln-${{ github.workflow }}
   cancel-in-progress: false
 permissions: {}
 jobs:

@@ -1,15 +1,19 @@
 package git
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/appthreat/vuln-list-update/utils"
 	"golang.org/x/xerrors"
 )
+
+const maxPushAttempts = 3
 
 type Operations interface {
 	CloneOrPull(string, string, string) (map[string]struct{}, error)
@@ -159,11 +163,36 @@ func (gc Config) Commit(repoPath, targetPath, message string) error {
 
 func (gc Config) Push(repoPath, branch string) error {
 	commandArgs := generateGitArgs(repoPath)
-	pushCmd := []string{"push", "origin", branch}
-	if _, err := utils.Exec("git", append(commandArgs, pushCmd...)); err != nil {
-		return xerrors.Errorf("error in git push: %w", err)
+
+	// Other workflows push to the same branch while this run is still
+	// updating data, so the local commit has to be rebased on top of the
+	// remote changes or the push is rejected as non-fast-forward.
+	var lastErr error
+	for attempt := 1; attempt <= maxPushAttempts; attempt++ {
+		fetchCmd := []string{"fetch", "origin", branch}
+		if _, err := utils.Exec("git", append(commandArgs, fetchCmd...)); err != nil {
+			return xerrors.Errorf("error in git fetch: %w", err)
+		}
+
+		// During a rebase "theirs" is the commit being replayed, so this
+		// resolves conflicts in favor of the newer local data.
+		rebaseCmd := []string{"rebase", "-X", "theirs", fmt.Sprintf("origin/%s", branch)}
+		if _, err := utils.Exec("git", append(commandArgs, rebaseCmd...)); err != nil {
+			abortCmd := []string{"rebase", "--abort"}
+			_, _ = utils.Exec("git", append(commandArgs, abortCmd...))
+			return xerrors.Errorf("error in git rebase: %w", err)
+		}
+
+		pushCmd := []string{"push", "origin", branch}
+		if _, err := utils.Exec("git", append(commandArgs, pushCmd...)); err != nil {
+			lastErr = err
+			log.Printf("git push attempt %d/%d failed, retrying", attempt, maxPushAttempts)
+			time.Sleep(time.Duration(attempt) * 2 * time.Second)
+			continue
+		}
+		return nil
 	}
-	return nil
+	return xerrors.Errorf("error in git push: %w", lastErr)
 }
 
 func (gc Config) Clean(repoPath string) error {
