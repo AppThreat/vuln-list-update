@@ -34,6 +34,9 @@ const (
 	repoURL          = "https://%s@github.com/%s/%s.git"
 	defaultRepoOwner = "appthreat"
 	defaultRepoName  = "vuln-list"
+
+	updateMaxRetries = 3
+	updateRetryDelay = 5 * time.Minute
 )
 
 var (
@@ -45,13 +48,31 @@ var (
 )
 
 func main() {
-	if err := run(); err != nil {
+	flag.Parse()
+	if err := runWithRetry(updateMaxRetries, updateRetryDelay, run); err != nil {
 		log.Fatal(err)
 	}
 }
 
+// runWithRetry retries a failed update so that transient network errors
+// (connection resets, flaky git mirrors, etc.) don't fail the whole run.
+func runWithRetry(maxRetries int, delay time.Duration, update func() error) error {
+	var err error
+	for attempt := 1; ; attempt++ {
+		if err = update(); err == nil {
+			return nil
+		}
+		if attempt > maxRetries {
+			break
+		}
+		log.Printf("update failed: %v", err)
+		log.Printf("retrying in %s (retry %d/%d)", delay, attempt, maxRetries)
+		time.Sleep(delay)
+	}
+	return xerrors.Errorf("update failed after %d attempts: %w", maxRetries+1, err)
+}
+
 func run() error {
-	flag.Parse()
 	now := time.Now().UTC()
 	gc := &git.Config{}
 	debug := os.Getenv("VULN_LIST_DEBUG") != ""
