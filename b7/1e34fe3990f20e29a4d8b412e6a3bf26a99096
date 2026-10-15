@@ -1,0 +1,18 @@
+redhat/securitydataapi/redhat.go
+  h_6a4cc5cdf68def 23-25,98,100
+utils/utils.go
+  h_6a4cc5cdf68def 7,154-158,169,218
+utils/utils_test.go
+  h_6a4cc5cdf68def 1-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b71e34fe3990f20e29a4d8b412e6a3bf26a99096",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
