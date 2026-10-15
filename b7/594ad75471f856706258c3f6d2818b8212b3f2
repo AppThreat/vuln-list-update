@@ -1,0 +1,18 @@
+debian/tracker/debian.go
+  h_6a4cc5cdf68def 14,26,29-34,116,153-169
+debian/tracker/debian_test.go
+  h_6a4cc5cdf68def 4-6,8-9,12,14,30-31,41,252-276,279,285-288,290,325-347
+debian/tracker/export_test.go
+  h_6a4cc5cdf68def 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b7594ad75471f856706258c3f6d2818b8212b3f2",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
