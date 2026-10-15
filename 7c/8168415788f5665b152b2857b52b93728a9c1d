@@ -1,0 +1,14 @@
+photon/photon.go
+  h_6a4cc5cdf68def 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7c8168415788f5665b152b2857b52b93728a9c1d",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
