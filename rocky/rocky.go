@@ -217,6 +217,11 @@ func (c Config) fetchUpdateInfo(url string) (*UpdateInfo, error) {
 			}
 		}
 		updateInfo.RLSAList[i].CveIDs = cveIDs
+
+		// Populate Packages from all Collections for backward compatibility.
+		for _, collection := range alas.Collections {
+			updateInfo.RLSAList[i].Packages = append(updateInfo.RLSAList[i].Packages, collection.Packages...)
+		}
 	}
 	return &updateInfo, nil
 }
