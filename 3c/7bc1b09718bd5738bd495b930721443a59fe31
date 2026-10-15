@@ -1,0 +1,16 @@
+suse/cvrf/cvrf.go
+  h_6a4cc5cdf68def 4,6-7,9,11,20-21,24-28,31-32,42,48-55,57,60-69,71-74,76-87,89-92,94-98,100-103,105-106,110-112,115-117,120-121,127
+suse/cvrf/cvrf_test.go
+  h_6a4cc5cdf68def 4-6,13,22-38,41-45,48-50,66-70,75-76,78,82,85,89-90,93,103,111,114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3c7bc1b09718bd5738bd495b930721443a59fe31",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
