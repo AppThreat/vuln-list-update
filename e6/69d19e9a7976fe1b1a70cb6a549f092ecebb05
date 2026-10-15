@@ -1,0 +1,54 @@
+oracle/oval/oval.go
+  h_6a4cc5cdf68def 1-95
+oracle/oval/oval_test.go
+  h_6a4cc5cdf68def 1-177
+oracle/oval/testdata/ELSA-2007-0057.xml
+  h_6a4cc5cdf68def 1-201
+oracle/oval/testdata/golden/ELSA-2007-0057.json
+  h_6a4cc5cdf68def 1-156
+oracle/oval/testdata/golden/ELSA-2008-0110.json
+  h_6a4cc5cdf68def 1-128
+oracle/oval/testdata/golden/ELSA-2009-1203.json
+  h_6a4cc5cdf68def 1-118
+oracle/oval/testdata/golden/ELSA-2010-0809.json
+  h_6a4cc5cdf68def 1-70
+oracle/oval/testdata/golden/ELSA-2011-1268.json
+  h_6a4cc5cdf68def 1-130
+oracle/oval/testdata/golden/ELSA-2012-1261.json
+  h_6a4cc5cdf68def 1-106
+oracle/oval/testdata/golden/ELSA-2013-1732.json
+  h_6a4cc5cdf68def 1-70
+oracle/oval/testdata/golden/ELSA-2014-2010.json
+  h_6a4cc5cdf68def 1-190
+oracle/oval/testdata/golden/ELSA-2015-2561.json
+  h_6a4cc5cdf68def 1-238
+oracle/oval/testdata/golden/ELSA-2016-3646.json
+  h_6a4cc5cdf68def 1-273
+oracle/oval/testdata/golden/ELSA-2017-3516.json
+  h_6a4cc5cdf68def 1-253
+oracle/oval/testdata/golden/ELSA-2018-1196-1.json
+  h_6a4cc5cdf68def 1-262
+oracle/oval/testdata/golden/ELSA-2018-3410.json
+  h_6a4cc5cdf68def 1-154
+oracle/oval/testdata/golden/ELSA-2019-4820.json
+  h_6a4cc5cdf68def 1-238
+oracle/oval/testdata/golden/ELSA-2019-4821.json
+  h_6a4cc5cdf68def 1-70
+oracle/oval/testdata/invalid.txt
+  h_6a4cc5cdf68def 1
+oracle/oval/types.go
+  h_6a4cc5cdf68def 1-47
+oracle/oval/types_test.go
+  h_6a4cc5cdf68def 1-196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e669d19e9a7976fe1b1a70cb6a549f092ecebb05",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
