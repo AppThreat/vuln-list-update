@@ -1,0 +1,16 @@
+nvd/nvd.go
+  h_6a4cc5cdf68def 91,102-103,105-112
+nvd/types.go
+  h_6a4cc5cdf68def 49-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a7a889bba812e6ef830733efeb900cf5f88116d2",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
