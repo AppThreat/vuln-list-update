@@ -80,6 +80,17 @@ jobs:
       name: Chainguard Secdb
       run: ./vuln-list-update -target chainguard
 
+    - if: always()
+      name: Bottlerocket Security Advisories
+      run: ./vuln-list-update -target bottlerocket
+
+    - if: always()
+      name: Oracle Linux OVAL
+      run: ./vuln-list-update -target oracle-oval
+
+    - if: always()
+      name: Seal Security Advisories
+      run: ./vuln-list-update -target seal
 
     - if: always()
       name: Red Hat Security Data API 2024-2026

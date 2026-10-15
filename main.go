@@ -9,25 +9,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appthreat/vuln-list-update/chainguard"
-	"github.com/appthreat/vuln-list-update/wolfi"
-
-	"golang.org/x/xerrors"
-
 	"github.com/appthreat/vuln-list-update/alma"
 	"github.com/appthreat/vuln-list-update/alpine"
 	alpineunfixed "github.com/appthreat/vuln-list-update/alpine-unfixed"
 	"github.com/appthreat/vuln-list-update/amazon"
 	arch_linux "github.com/appthreat/vuln-list-update/arch"
+	"github.com/appthreat/vuln-list-update/bottlerocket"
+	"github.com/appthreat/vuln-list-update/chainguard"
 	"github.com/appthreat/vuln-list-update/debian/tracker"
 	"github.com/appthreat/vuln-list-update/git"
 	"github.com/appthreat/vuln-list-update/nvd"
+	oracleoval "github.com/appthreat/vuln-list-update/oracle/oval"
 	"github.com/appthreat/vuln-list-update/photon"
 	"github.com/appthreat/vuln-list-update/redhat/securitydataapi"
 	"github.com/appthreat/vuln-list-update/rocky"
+	"github.com/appthreat/vuln-list-update/seal"
 	susecvrf "github.com/appthreat/vuln-list-update/suse/cvrf"
 	"github.com/appthreat/vuln-list-update/ubuntu"
 	"github.com/appthreat/vuln-list-update/utils"
+	"github.com/appthreat/vuln-list-update/wolfi"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -41,7 +42,7 @@ const (
 
 var (
 	target = flag.String("target", "", "update target (nvd, alpine, alpine-unfixed, redhat, "+
-		"debian, ubuntu, amazon, suse-cvrf, photon, arch-linux, wolfi, chainguard)")
+		"debian, ubuntu, amazon, bottlerocket, oracle-oval, suse-cvrf, photon, arch-linux, wolfi, chainguard, seal)")
 	years        = flag.String("years", "", "update years (only redhat)")
 	targetUri    = flag.String("target-uri", "", "alternative repository URI (only glad)")
 	targetBranch = flag.String("target-branch", "", "alternative repository branch (only glad)")
@@ -198,6 +199,24 @@ func run() error {
 			return xerrors.Errorf("Chainguard update error: %w", err)
 		}
 		commitMsg = "Chainguard Security Data"
+	case "bottlerocket":
+		bc := bottlerocket.NewConfig()
+		if err := bc.Update(); err != nil {
+			return xerrors.Errorf("Bottlerocket update error: %w", err)
+		}
+		commitMsg = "Bottlerocket Security Advisories"
+	case "oracle-oval":
+		oc := oracleoval.NewConfig()
+		if err := oc.Update(); err != nil {
+			return xerrors.Errorf("Oracle OVAL update error: %w", err)
+		}
+		commitMsg = "Oracle Linux OVAL"
+	case "seal":
+		su := seal.NewSeal()
+		if err := su.Update(); err != nil {
+			return xerrors.Errorf("Seal Security update error: %w", err)
+		}
+		commitMsg = "Seal Security Advisories"
 	default:
 		return xerrors.New("unknown target")
 	}
