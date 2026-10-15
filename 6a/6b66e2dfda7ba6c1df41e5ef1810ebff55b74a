@@ -1,0 +1,22 @@
+rocky/rocky.go
+  h_6a4cc5cdf68def 220-224
+rocky/testdata/golden/2019/RLSA-2019:1972.json
+  h_6a4cc5cdf68def 1-85
+rocky/testdata/golden/2021/RLSA-2021:2575.json
+  h_6a4cc5cdf68def 12,14-27,49
+rocky/testdata/golden/2021/RLSA-2021:3057.json
+  h_6a4cc5cdf68def 12-26,63
+rocky/types.go
+  h_6a4cc5cdf68def 26-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6a6b66e2dfda7ba6c1df41e5ef1810ebff55b74a",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
