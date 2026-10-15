@@ -1,0 +1,40 @@
+osv/osv.go
+  h_6a4cc5cdf68def 1-107
+osv/types.go
+  h_6a4cc5cdf68def 1-63
+seal/seal.go
+  h_6a4cc5cdf68def 1-64
+seal/seal_test.go
+  h_6a4cc5cdf68def 1-103
+seal/testdata/golden/noprefix/org.apache.logging.log4j/log4j-core/CVE-2025-68161.json
+  h_6a4cc5cdf68def 1-26
+seal/testdata/golden/noprefix/requests/CVE-2023-32681.json
+  h_6a4cc5cdf68def 1-26
+seal/testdata/golden/renamed/@seal-security/ajv/CVE-2025-69873.json
+  h_6a4cc5cdf68def 1-26
+seal/testdata/golden/renamed/seal-glibc/CVE-2023-6780.json
+  h_6a4cc5cdf68def 1-26
+seal/testdata/golden/renamed/seal-rack/CVE-2025-61780.json
+  h_6a4cc5cdf68def 1-37
+seal/testdata/golden/renamed/seal-requests/CVE-2023-32681.json
+  h_6a4cc5cdf68def 1-26
+seal/testdata/golden/renamed/seal-rsync/CVE-2020-14387.json
+  h_6a4cc5cdf68def 1-26
+seal/testdata/golden/renamed/seal-screen/CVE-2025-46803.json
+  h_6a4cc5cdf68def 1-45
+seal/testdata/golden/renamed/seal.sp1.org.apache.logging.log4j/log4j-core/CVE-2025-68161.json
+  h_6a4cc5cdf68def 1-45
+seal/testdata/golden/renamed/sealsecurity.io/golang.org/x/crypto/CVE-2025-22869.json
+  h_6a4cc5cdf68def 1-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4c17f0e3d29e19ae247223163942d7a80bf67f06",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
