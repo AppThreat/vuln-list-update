@@ -1,0 +1,18 @@
+ubuntu/testdata/upstream_no_trailing_newline
+  h_6a4cc5cdf68def 1-3
+ubuntu/ubuntu.go
+  h_6a4cc5cdf68def 329
+ubuntu/ubuntu_test.go
+  h_6a4cc5cdf68def 430-444
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "32e8613ee501c5431d010e79567073b083f60f7d",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
