@@ -69,6 +69,10 @@ func (db *Database) Update() error {
 			if err != nil {
 				return xerrors.Errorf("file open error (%s): %w", path, err)
 			}
+			// The deferred close runs when this WalkDir callback returns, so
+			// each file is closed right after decoding instead of leaking a
+			// descriptor across the thousands of advisories a feed holds.
+			defer f.Close()
 
 			var parsed OSV
 			if err = json.NewDecoder(f).Decode(&parsed); err != nil {
