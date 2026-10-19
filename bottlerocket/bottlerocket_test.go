@@ -92,10 +92,14 @@ func gzipUpdateInfo(t *testing.T, ids ...string) []byte {
 		fmt.Fprintf(&xmlBody, "<update><id>%s</id><title>kernel CVE-2099-0001</title></update>\n", id)
 	}
 	xmlBody.WriteString("</updates>\n")
+	return gzipBytes(t, xmlBody.String())
+}
 
+func gzipBytes(t *testing.T, s string) []byte {
+	t.Helper()
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
-	_, err := gw.Write(xmlBody.Bytes())
+	_, err := gw.Write([]byte(s))
 	require.NoError(t, err)
 	require.NoError(t, gw.Close())
 	return buf.Bytes()
@@ -145,4 +149,70 @@ func TestConfig_Update_UnsafeIDs(t *testing.T) {
 	require.NoError(t, c.Update())
 
 	assert.Equal(t, []string{filepath.Join("vuln-list", "bottlerocket", "BRSA-good.json")}, listFiles(t, root))
+}
+
+// The tree is replaced only after the new feed has been fetched and parsed.
+// An error page, an empty feed or a failed download must leave the existing
+// advisories in place instead of committing an empty tree.
+func TestConfig_Update_KeepsTreeOnBadFeed(t *testing.T) {
+	testCases := []struct {
+		name     string
+		status   int
+		body     []byte
+		wantErr  string
+		wantKept bool
+	}{
+		{
+			name: "good feed replaces the tree",
+			body: gzipUpdateInfo(t, "BRSA-new"),
+		},
+		{
+			name:     "gzipped HTML error page",
+			body:     gzipBytes(t, "<html><body>Service Unavailable</body></html>"),
+			wantErr:  "failed to decode updateinfo XML",
+			wantKept: true,
+		},
+		{
+			name:     "feed without updates",
+			body:     gzipBytes(t, `<?xml version="1.0"?>`+"\n<updates>\n</updates>\n"),
+			wantErr:  "no advisories",
+			wantKept: true,
+		},
+		{
+			name:     "download fails",
+			status:   http.StatusNotFound,
+			wantErr:  "failed to fetch Bottlerocket security advisories",
+			wantKept: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if tc.status != 0 {
+					w.WriteHeader(tc.status)
+					return
+				}
+				_, _ = w.Write(tc.body)
+			}))
+			defer ts.Close()
+
+			vulnListDir := t.TempDir()
+			existing := filepath.Join(vulnListDir, "bottlerocket", "BRSA-old.json")
+			require.NoError(t, os.MkdirAll(filepath.Dir(existing), 0700))
+			require.NoError(t, os.WriteFile(existing, []byte("{}"), 0600))
+
+			c := bottlerocket.NewConfig(
+				bottlerocket.WithURL(ts.URL+"/updateinfo.xml.gz"),
+				bottlerocket.WithVulnListDir(vulnListDir),
+			)
+			err := c.Update()
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				assert.Equal(t, []string{filepath.Join("bottlerocket", "BRSA-old.json")}, listFiles(t, vulnListDir))
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, []string{filepath.Join("bottlerocket", "BRSA-new.json")}, listFiles(t, vulnListDir))
+		})
+	}
 }

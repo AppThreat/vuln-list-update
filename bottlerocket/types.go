@@ -1,7 +1,12 @@
 package bottlerocket
 
-// UpdateInfo represents the top-level structure of the updateinfo.xml file
+import "encoding/xml"
+
+// UpdateInfo represents the top-level structure of the updateinfo.xml file.
+// Naming the root element makes decoding reject documents that aren't
+// updateinfo at all, such as an HTML error page.
 type UpdateInfo struct {
+	XMLName xml.Name `xml:"updates"`
 	Updates []Update `xml:"update"`
 }
 

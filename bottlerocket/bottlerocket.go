@@ -55,17 +55,22 @@ func NewConfig(opts ...option) *Config {
 func (c *Config) Update() error {
 	log.Println("Fetching Bottlerocket security advisories...")
 
+	updates, err := fetchUpdateInfo(c.url)
+	if err != nil {
+		return xerrors.Errorf("failed to fetch Bottlerocket security advisories: %w", err)
+	}
+	if len(updates.Updates) == 0 {
+		return xerrors.New("Bottlerocket updateinfo has no advisories")
+	}
+
+	// Only replace the tree once the new feed has been fetched and parsed,
+	// so an outage or an error page can't wipe the published advisories.
 	dir := filepath.Join(c.vulnListDir, bottlerocketDir)
 	if err := os.RemoveAll(dir); err != nil {
 		return xerrors.Errorf("unable to remove bottlerocket directory: %w", err)
 	}
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return xerrors.Errorf("failed to mkdir: %w", err)
-	}
-
-	updates, err := fetchUpdateInfo(c.url)
-	if err != nil {
-		return xerrors.Errorf("failed to fetch Bottlerocket security advisories: %w", err)
 	}
 
 	bar := pb.StartNew(len(updates.Updates))
