@@ -1,0 +1,25 @@
+redhat/securitydataapi/redhat_test.go
+  s_0417f7ab5a351c::t_30725412bf0b81 1-18
+utils/export_test.go
+  s_0417f7ab5a351c::t_356fd82cd13f43 1-14
+utils/utils.go
+  s_0417f7ab5a351c::t_765e62a157c280 12,118-176,180-182,188-190,209-210
+utils/utils_test.go
+  s_0417f7ab5a351c::t_c813f42b145632 4,7,68-173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1053421236c79a9423df4dad2a1bb5b45d69025b",
+  "prompts": {},
+  "sessions": {
+    "s_0417f7ab5a351c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d133fbd-49f0-47a2-89d8-f4b2717d41b1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
