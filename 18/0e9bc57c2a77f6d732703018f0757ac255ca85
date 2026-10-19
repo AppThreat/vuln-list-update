@@ -1,0 +1,21 @@
+suse/cvrf/cvrf.go
+  s_0417f7ab5a351c::t_1a011a0c484de0 13,79-81,86,124-125,128-130,134-191,195,201,214,219,221
+suse/cvrf/cvrf_test.go
+  s_0417f7ab5a351c::t_33de973643fa71 209-284
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "180e9bc57c2a77f6d732703018f0757ac255ca85",
+  "prompts": {},
+  "sessions": {
+    "s_0417f7ab5a351c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d133fbd-49f0-47a2-89d8-f4b2717d41b1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
