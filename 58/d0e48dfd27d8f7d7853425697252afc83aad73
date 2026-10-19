@@ -1,0 +1,23 @@
+amazon/amazon.go
+  s_0417f7ab5a351c::t_e743714128a705 30-31
+amazon/amazon_test.go
+  s_0417f7ab5a351c::t_51e92acab0e1ac 117-126
+amazon/export_test.go
+  s_0417f7ab5a351c::t_c22556fbf989c4 1-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "58d0e48dfd27d8f7d7853425697252afc83aad73",
+  "prompts": {},
+  "sessions": {
+    "s_0417f7ab5a351c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d133fbd-49f0-47a2-89d8-f4b2717d41b1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
