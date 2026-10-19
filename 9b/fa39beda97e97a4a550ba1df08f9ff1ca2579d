@@ -1,0 +1,23 @@
+photon/photon_test.go
+  s_0417f7ab5a351c::t_68044a6d20c983 295-324
+photon/testdata/cve_data_photon_status.json
+  s_0417f7ab5a351c::t_32a74b0612bfb2 1-18
+photon/types.go
+  s_0417f7ab5a351c::t_90c7271c861d9a 14-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9bfa39beda97e97a4a550ba1df08f9ff1ca2579d",
+  "prompts": {},
+  "sessions": {
+    "s_0417f7ab5a351c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d133fbd-49f0-47a2-89d8-f4b2717d41b1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
