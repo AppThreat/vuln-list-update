@@ -206,3 +206,79 @@ func TestConfig_Update_UnsafePaths(t *testing.T) {
 func TestNewConfig_UsesHTTPS(t *testing.T) {
 	assert.Equal(t, "https://ftp.suse.com/pub/projects/security/cvrf.tar.bz2", cvrf.NewConfig().URL)
 }
+
+// Advisories SUSE drops from the archive (and junk such as a page saved as
+// "403 Forbidden") must disappear once a complete archive has been
+// processed. A broken or empty archive must leave the tree alone.
+func TestConfig_Update_RemovesStaleFiles(t *testing.T) {
+	const (
+		stale       = "/tmp/cvrf/suse/suse/2010/SUSE-SU-2010-0001-1.json"
+		junk        = "/tmp/cvrf/suse/suse/403 Forbidden/SUSE-SU-403 Forbidden-1.json"
+		rewritten   = "/tmp/cvrf/suse/suse/2019/SUSE-SU-2019-1608-1.json"
+		otherSource = "/tmp/cvrf/other/x.json"
+	)
+	testCases := []struct {
+		name      string
+		archive   []byte
+		wantErr   string
+		wantStale bool
+	}{
+		{
+			name:    "complete archive",
+			archive: createArchive(t, "testdata/cvrf"),
+		},
+		{
+			name:      "broken XML",
+			archive:   createArchive(t, "testdata/broken-cvrf"),
+			wantErr:   "failed to decode SUSE XML",
+			wantStale: true,
+		},
+		{
+			name:      "archive without advisories",
+			archive:   createArchiveFromEntries(t, [][2]string{{"LICENSE", "license text"}}),
+			wantErr:   "no advisories",
+			wantStale: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write(tc.archive)
+			}))
+			defer ts.Close()
+
+			appFs := afero.NewMemMapFs()
+			for _, f := range []string{stale, junk, rewritten, otherSource} {
+				require.NoError(t, afero.WriteFile(appFs, f, []byte("{}"), 0600))
+			}
+
+			c := cvrf.Config{
+				VulnListDir: "/tmp",
+				URL:         ts.URL + "/cvrf.tar.gz",
+				AppFs:       appFs,
+			}
+			err := c.Update()
+			files := walkFiles(t, appFs)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				assert.Subset(t, files, []string{stale, junk, rewritten, otherSource})
+				return
+			}
+			require.NoError(t, err)
+			assert.NotContains(t, files, stale)
+			assert.NotContains(t, files, junk)
+			assert.Contains(t, files, rewritten)
+			assert.Contains(t, files, otherSource)
+			assert.Len(t, files, 12, "11 advisories from the archive plus the other source")
+
+			for _, dir := range []string{"/tmp/cvrf/suse/suse/2010", "/tmp/cvrf/suse/suse/403 Forbidden"} {
+				ok, err := afero.DirExists(appFs, dir)
+				require.NoError(t, err)
+				assert.False(t, ok, "empty directory %s is removed", dir)
+			}
+			b, err := afero.ReadFile(appFs, rewritten)
+			require.NoError(t, err)
+			assert.NotEqual(t, "{}", string(b), "advisory is rewritten from the archive")
+		})
+	}
+}
