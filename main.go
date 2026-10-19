@@ -23,7 +23,6 @@ import (
 	"github.com/appthreat/vuln-list-update/photon"
 	"github.com/appthreat/vuln-list-update/redhat/securitydataapi"
 	"github.com/appthreat/vuln-list-update/rocky"
-	"github.com/appthreat/vuln-list-update/seal"
 	susecvrf "github.com/appthreat/vuln-list-update/suse/cvrf"
 	"github.com/appthreat/vuln-list-update/ubuntu"
 	"github.com/appthreat/vuln-list-update/utils"
@@ -42,7 +41,7 @@ const (
 
 var (
 	target = flag.String("target", "", "update target (nvd, alpine, alpine-unfixed, redhat, "+
-		"debian, ubuntu, amazon, bottlerocket, oracle-oval, suse-cvrf, photon, arch-linux, wolfi, chainguard, seal)")
+		"debian, ubuntu, amazon, bottlerocket, oracle-oval, suse-cvrf, photon, arch-linux, wolfi, chainguard)")
 	years        = flag.String("years", "", "update years (only redhat)")
 	targetUri    = flag.String("target-uri", "", "alternative repository URI (only glad)")
 	targetBranch = flag.String("target-branch", "", "alternative repository branch (only glad)")
@@ -211,12 +210,6 @@ func run() error {
 			return xerrors.Errorf("Oracle OVAL update error: %w", err)
 		}
 		commitMsg = "Oracle Linux OVAL"
-	case "seal":
-		su := seal.NewSeal()
-		if err := su.Update(); err != nil {
-			return xerrors.Errorf("Seal Security update error: %w", err)
-		}
-		commitMsg = "Seal Security Advisories"
 	default:
 		return xerrors.New("unknown target")
 	}
