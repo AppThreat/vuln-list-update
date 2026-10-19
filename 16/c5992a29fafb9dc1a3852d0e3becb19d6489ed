@@ -1,0 +1,59 @@
+oracle/oval/oval_test.go
+  s_0417f7ab5a351c::t_55b11ca49ffed7 61-72
+oracle/oval/testdata/elsa-with-cpes.xml
+  s_0417f7ab5a351c::t_9b48597b74969e 1-89
+oracle/oval/testdata/golden/ELSA-2007-0057.json
+  s_0417f7ab5a351c::t_dc910f8f56c1cd 155-157
+oracle/oval/testdata/golden/ELSA-2008-0110.json
+  s_0417f7ab5a351c::t_e8b7009e035016 127-129
+oracle/oval/testdata/golden/ELSA-2009-1203.json
+  s_0417f7ab5a351c::t_f6b67b37437279 117-119
+oracle/oval/testdata/golden/ELSA-2010-0809.json
+  s_0417f7ab5a351c::t_a1e2ca0732ce7c 69-71
+oracle/oval/testdata/golden/ELSA-2011-1268.json
+  s_0417f7ab5a351c::t_9c5607b6d0e030 129-131
+oracle/oval/testdata/golden/ELSA-2012-1261.json
+  s_0417f7ab5a351c::t_5112149ff5f8c9 105-107
+oracle/oval/testdata/golden/ELSA-2013-1732.json
+  s_0417f7ab5a351c::t_7807de3c6216f4 69-71
+oracle/oval/testdata/golden/ELSA-2014-2010.json
+  s_0417f7ab5a351c::t_a19cc9c3c3612b 189-191
+oracle/oval/testdata/golden/ELSA-2015-2561.json
+  s_0417f7ab5a351c::t_88e2b5c92a65a3 237-239
+oracle/oval/testdata/golden/ELSA-2016-3646.json
+  s_0417f7ab5a351c::t_520eba472a7c25 272-274
+oracle/oval/testdata/golden/ELSA-2017-3516.json
+  s_0417f7ab5a351c::t_972563c8de55ee 252-254
+oracle/oval/testdata/golden/ELSA-2018-1196-1.json
+  s_0417f7ab5a351c::t_bc1253080e1911 261-263
+oracle/oval/testdata/golden/ELSA-2018-3410.json
+  s_0417f7ab5a351c::t_4f9cd538d3b3c8 153-155
+oracle/oval/testdata/golden/ELSA-2019-4820.json
+  s_0417f7ab5a351c::t_e231579d681e4b 237-239
+oracle/oval/testdata/golden/ELSA-2019-4821.json
+  s_0417f7ab5a351c::t_ebcb531f206dd3 69-71
+oracle/oval/testdata/golden/ELSA-2023-12143.json
+  s_0417f7ab5a351c::t_46c26415db96b3 1-175
+oracle/oval/testdata/golden/ELSA-2099-0001.json
+  s_0417f7ab5a351c::t_cd264c0b021304 21-23
+oracle/oval/types.go
+  s_0417f7ab5a351c::t_bcf3c296fb54c5 16-23
+oracle/oval/types_test.go
+  s_0417f7ab5a351c::t_767ad83ea1f5e9 174-175,199-221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "16c5992a29fafb9dc1a3852d0e3becb19d6489ed",
+  "prompts": {},
+  "sessions": {
+    "s_0417f7ab5a351c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d133fbd-49f0-47a2-89d8-f4b2717d41b1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
