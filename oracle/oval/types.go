@@ -13,6 +13,14 @@ type Definition struct {
 	Severity    string      `xml:"metadata>advisory>severity"`
 	Cves        []Cve       `xml:"metadata>advisory>cve"`
 	Issued      Issued      `xml:"metadata>advisory>issued" json:",omitempty"`
+	// AffectedCPEList holds the channels the erratum ships to, e.g.
+	// "cpe:/o:oracle:linux:9::baseos_latest", "cpe:/a:oracle:linux:6:10:ELS"
+	// or "cpe:/a:oracle:exadata_dbserver:23.1.1.0.0::ol8".
+	AffectedCPEList []string `xml:"metadata>advisory>affected_cpe_list>cpe" json:",omitempty"`
+	// DefinitionID and DefinitionVersion are the OVAL definition's id and
+	// version attributes, e.g. "oval:com.oracle.elsa:def:20070057" and "501".
+	DefinitionID      string `xml:"id,attr" json:",omitempty"`
+	DefinitionVersion string `xml:"version,attr" json:",omitempty"`
 }
 
 type Reference struct {

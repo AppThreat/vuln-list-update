@@ -89,10 +89,6 @@ jobs:
       run: ./vuln-list-update -target oracle-oval
 
     - if: always()
-      name: Seal Security Advisories
-      run: ./vuln-list-update -target seal
-
-    - if: always()
       name: Red Hat Security Data API 2024-2026
       run: ./vuln-list-update -target redhat -years 2024,2025,2026
 

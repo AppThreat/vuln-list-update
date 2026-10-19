@@ -23,7 +23,6 @@ import (
 	"github.com/appthreat/vuln-list-update/photon"
 	"github.com/appthreat/vuln-list-update/redhat/securitydataapi"
 	"github.com/appthreat/vuln-list-update/rocky"
-	"github.com/appthreat/vuln-list-update/seal"
 	susecvrf "github.com/appthreat/vuln-list-update/suse/cvrf"
 	"github.com/appthreat/vuln-list-update/ubuntu"
 	"github.com/appthreat/vuln-list-update/utils"
@@ -42,7 +41,7 @@ const (
 
 var (
 	target = flag.String("target", "", "update target (nvd, alpine, alpine-unfixed, redhat, "+
-		"debian, ubuntu, amazon, bottlerocket, oracle-oval, suse-cvrf, photon, arch-linux, wolfi, chainguard, seal)")
+		"debian, ubuntu, amazon, bottlerocket, oracle-oval, suse-cvrf, photon, arch-linux, wolfi, chainguard)")
 	years        = flag.String("years", "", "update years (only redhat)")
 	targetUri    = flag.String("target-uri", "", "alternative repository URI (only glad)")
 	targetBranch = flag.String("target-branch", "", "alternative repository branch (only glad)")
@@ -71,6 +70,23 @@ func runWithRetry(maxRetries int, delay time.Duration, update func() error) erro
 		time.Sleep(delay)
 	}
 	return xerrors.Errorf("update failed after %d attempts: %w", maxRetries+1, err)
+}
+
+// selfManagedLastUpdated lists targets that maintain their own entry in
+// last_updated.json, under the same key as the target name. nvd records the
+// end of the window it fetched and deliberately leaves the entry alone when
+// the API returned nothing, so stamping it with "now" here would undo that.
+var selfManagedLastUpdated = map[string]bool{
+	"nvd": true,
+}
+
+// recordLastUpdated stamps the target's last_updated.json entry with now,
+// unless the target manages that entry itself.
+func recordLastUpdated(target string, now time.Time) error {
+	if selfManagedLastUpdated[target] {
+		return nil
+	}
+	return utils.SetLastUpdatedDate(target, now)
 }
 
 func run() error {
@@ -211,12 +227,6 @@ func run() error {
 			return xerrors.Errorf("Oracle OVAL update error: %w", err)
 		}
 		commitMsg = "Oracle Linux OVAL"
-	case "seal":
-		su := seal.NewSeal()
-		if err := su.Update(); err != nil {
-			return xerrors.Errorf("Seal Security update error: %w", err)
-		}
-		commitMsg = "Seal Security Advisories"
 	default:
 		return xerrors.New("unknown target")
 	}
@@ -225,7 +235,7 @@ func run() error {
 		return nil
 	}
 
-	if err := utils.SetLastUpdatedDate(*target, now); err != nil {
+	if err := recordLastUpdated(*target, now); err != nil {
 		return err
 	}
 

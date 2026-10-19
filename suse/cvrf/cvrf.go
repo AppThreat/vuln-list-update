@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -22,7 +23,7 @@ import (
 )
 
 const (
-	cvrfArchiveURL = "http://ftp.suse.com/pub/projects/security/cvrf.tar.bz2"
+	cvrfArchiveURL = "https://ftp.suse.com/pub/projects/security/cvrf.tar.bz2"
 	cvrfDir        = "cvrf"
 	suseDir        = "suse"
 	retries        = 5
@@ -75,11 +76,14 @@ func (c Config) Update() error {
 	}
 	tr := tar.NewReader(decompressed)
 
+	// Every file this pass writes, so the ones it didn't can be removed once
+	// the whole archive has been processed.
+	written := map[string]struct{}{}
 	for {
 		hdr, err := tr.Next()
 		switch {
 		case errors.Is(err, io.EOF):
-			return nil
+			return c.removeStale(written)
 		case err != nil:
 			return xerrors.Errorf("failed to read tar entry: %w", err)
 		case hdr.Typeflag != tar.TypeReg:
@@ -117,30 +121,102 @@ func (c Config) Update() error {
 			return xerrors.Errorf("failed to decode SUSE XML (%s): %w", filename, err)
 		}
 
-		dir := filepath.Join(cvrfDir, suseDir, osName)
-		if err = c.saveCvrfPerYear(dir, cv.Tracking.ID, cv); err != nil {
+		path, err := c.saveCvrfPerYear(osName, cv.Tracking.ID, cv)
+		if err != nil {
 			return xerrors.Errorf("failed to save CVRF: %w", err)
+		}
+		if path != "" {
+			written[path] = struct{}{}
 		}
 	}
 }
 
-func (c Config) saveCvrfPerYear(dirName string, cvrfID string, data Cvrf) error {
+// removeStale deletes the files under cvrf/suse that this pass didn't write,
+// i.e. advisories SUSE no longer publishes, and the directories left empty.
+// It runs only after the whole archive has been processed without error.
+func (c Config) removeStale(written map[string]struct{}) error {
+	if len(written) == 0 {
+		return xerrors.New("SUSE CVRF archive has no advisories")
+	}
+
+	root := filepath.Join(c.VulnListDir, cvrfDir, suseDir)
+	var stale, dirs []string
+	err := afero.Walk(c.AppFs, root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			if path != root {
+				dirs = append(dirs, path)
+			}
+			return nil
+		}
+		if _, ok := written[path]; !ok {
+			stale = append(stale, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return xerrors.Errorf("failed to walk %s: %w", root, err)
+	}
+
+	for _, path := range stale {
+		if err = c.AppFs.Remove(path); err != nil {
+			return xerrors.Errorf("failed to remove stale CVRF file: %w", err)
+		}
+	}
+	if len(stale) > 0 {
+		log.Printf("Removed %d stale SUSE CVRF files", len(stale))
+	}
+
+	// Walk visits a directory before its children, so going backwards
+	// empties children before their parents are checked.
+	for i := len(dirs) - 1; i >= 0; i-- {
+		empty, err := afero.IsEmpty(c.AppFs, dirs[i])
+		if err != nil {
+			return xerrors.Errorf("failed to read %s: %w", dirs[i], err)
+		}
+		if !empty {
+			continue
+		}
+		if err = c.AppFs.Remove(dirs[i]); err != nil {
+			return xerrors.Errorf("failed to remove empty directory %s: %w", dirs[i], err)
+		}
+	}
+	return nil
+}
+
+// saveCvrfPerYear writes one advisory and returns its path, or "" when the
+// advisory is skipped.
+func (c Config) saveCvrfPerYear(osName string, cvrfID string, data Cvrf) (string, error) {
 	s := strings.Split(cvrfID, "-")
 	if len(s) < 4 {
 		log.Printf("invalid CVRF-ID format: %s", cvrfID)
-		return nil
+		return "", nil
 	}
 
 	year := strings.Split(s[2], ":")[0]
 	if len(year) < 4 {
 		log.Printf("invalid CVRF-ID format: %s", cvrfID)
-		return nil
+		return "", nil
 	}
 
-	yearDir := filepath.Join(c.VulnListDir, dirName, year)
-	fileName := fmt.Sprintf("%s.json", strings.Replace(cvrfID, ":", "-", 1))
-	if err := utils.WriteJSON(c.AppFs, yearDir, fileName, data); err != nil {
-		return xerrors.Errorf("failed to write file: %w", err)
+	// The OS name comes from the archive entry name and the year and file
+	// name from the document's tracking ID, so none of them may step outside
+	// the cvrf/suse tree.
+	advisoryID := strings.Replace(cvrfID, ":", "-", 1)
+	yearDir, err := utils.SafeJoin(filepath.Join(c.VulnListDir, cvrfDir, suseDir), osName, year)
+	if err == nil {
+		err = utils.ValidatePathComponent(advisoryID)
 	}
-	return nil
+	if err != nil {
+		log.Printf("skip CVRF with an unsafe path: %v", err)
+		return "", nil
+	}
+
+	fileName := fmt.Sprintf("%s.json", advisoryID)
+	if err := utils.WriteJSON(c.AppFs, yearDir, fileName, data); err != nil {
+		return "", xerrors.Errorf("failed to write file: %w", err)
+	}
+	return filepath.Join(yearDir, fileName), nil
 }

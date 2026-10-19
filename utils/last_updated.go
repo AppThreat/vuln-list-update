@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	lastUpdatedFile = "last_updated.json"
+	// LastUpdatedFile is the file at the root of vuln-list that records when
+	// each target was last updated.
+	LastUpdatedFile = "last_updated.json"
 )
 
 type LastUpdated map[string]time.Time
@@ -31,7 +33,7 @@ func GetLastUpdatedDate(dist string) (time.Time, error) {
 }
 
 func getLastUpdatedDate() (map[string]time.Time, error) {
-	lastUpdatedFilePath := filepath.Join(VulnListDir(), lastUpdatedFile)
+	lastUpdatedFilePath := filepath.Join(VulnListDir(), LastUpdatedFile)
 	lastUpdated := LastUpdated{}
 	if _, err := os.Stat(lastUpdatedFilePath); os.IsNotExist(err) {
 		return lastUpdated, nil
@@ -56,7 +58,7 @@ func SetLastUpdatedDate(dist string, lastUpdatedDate time.Time) error {
 	}
 	lastUpdated[dist] = lastUpdatedDate
 
-	lastUpdatedFilePath := filepath.Join(VulnListDir(), lastUpdatedFile)
+	lastUpdatedFilePath := filepath.Join(VulnListDir(), LastUpdatedFile)
 	b, err := json.MarshalIndent(lastUpdated, "", "  ")
 	if err != nil {
 		return err

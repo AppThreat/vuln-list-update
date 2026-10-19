@@ -1,0 +1,24 @@
+{
+  "Title": "ELSA-2099-0001:  ok security update  (MODERATE)",
+  "Description": "ok",
+  "Platform": [
+    "Oracle Linux 9"
+  ],
+  "References": null,
+  "Criteria": {
+    "Operator": "AND",
+    "Criterias": null,
+    "Criterions": [
+      {
+        "Comment": "Oracle Linux 9 is installed"
+      }
+    ]
+  },
+  "Severity": "MODERATE",
+  "Cves": null,
+  "Issued": {
+    "Date": "2099-01-01"
+  },
+  "DefinitionID": "oval:com.oracle.elsa:def:20990000",
+  "DefinitionVersion": "501"
+}

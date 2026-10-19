@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/bzip2"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -57,8 +58,19 @@ func (c Config) Update() error {
 	if err != nil {
 		return xerrors.Errorf("failed to decode Oracle Linux OVAL XML: %w", err)
 	}
+	if len(ov.Definitions) == 0 {
+		return xerrors.New("Oracle Linux OVAL has no definitions")
+	}
 
+	// The feed is complete, so rewrite the tree from scratch: advisories
+	// Oracle has withdrawn would otherwise stay in vuln-list forever. This
+	// happens only after a successful download and decode, so a failed
+	// fetch never wipes the existing data.
 	dir := filepath.Join(ovalDir, oracleDir)
+	if err = c.AppFs.RemoveAll(filepath.Join(c.VulnListDir, dir)); err != nil {
+		return xerrors.Errorf("failed to remove Oracle Linux OVAL directory: %w", err)
+	}
+
 	bar := pb.StartNew(len(ov.Definitions))
 	for _, def := range ov.Definitions {
 		def.Title = strings.TrimSpace(def.Title)
@@ -69,6 +81,10 @@ func (c Config) Update() error {
 		if err = c.saveELSAPerYear(dir, elsaID, def); err != nil {
 			if err == ErrInvalidELSAID {
 				log.Printf("Invalid ELSA ID: %s\n", elsaID)
+				continue
+			}
+			if errors.Is(err, utils.ErrUnsafePath) {
+				log.Printf("Skip ELSA with an unsafe ID: %v", err)
 				continue
 			}
 
@@ -87,7 +103,15 @@ func (c Config) saveELSAPerYear(dirName string, elsaID string, data interface{})
 		return ErrInvalidELSAID
 	}
 
-	yearDir := filepath.Join(c.VulnListDir, dirName, s[1])
+	// The ID is parsed out of the feed's title and becomes both the year
+	// directory and the file name, so neither may escape the oracle tree.
+	if err := utils.ValidatePathComponent(elsaID); err != nil {
+		return err
+	}
+	yearDir, err := utils.SafeJoin(filepath.Join(c.VulnListDir, dirName), s[1])
+	if err != nil {
+		return err
+	}
 	if err := utils.WriteJSON(c.AppFs, yearDir, fmt.Sprintf("%s.json", elsaID), data); err != nil {
 		return xerrors.Errorf("failed to write file: %w", err)
 	}

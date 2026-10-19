@@ -5,9 +5,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"flag"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -120,6 +122,163 @@ func TestConfig_Update(t *testing.T) {
 			})
 			assert.NoError(t, err, tc.name)
 			assert.Equal(t, len(tc.goldenFiles), fileCount, tc.name)
+		})
+	}
+}
+
+// createArchiveFromEntries creates a tar.gz archive holding the given
+// file name to content pairs, in order.
+func createArchiveFromEntries(t *testing.T, entries [][2]string) []byte {
+	t.Helper()
+
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+	for _, e := range entries {
+		require.NoError(t, tw.WriteHeader(&tar.Header{
+			Name:     e[0],
+			Mode:     0600,
+			Size:     int64(len(e[1])),
+			Typeflag: tar.TypeReg,
+		}))
+		_, err := tw.Write([]byte(e[1]))
+		require.NoError(t, err)
+	}
+	require.NoError(t, tw.Close())
+	require.NoError(t, gw.Close())
+	return buf.Bytes()
+}
+
+func cvrfDoc(id string) string {
+	return fmt.Sprintf("<cvrfdoc><DocumentTitle>test</DocumentTitle><DocumentTracking>"+
+		"<Identification><ID>%s</ID></Identification></DocumentTracking></cvrfdoc>", id)
+}
+
+// walkFiles returns every regular file in fs, sorted.
+func walkFiles(t *testing.T, fs afero.Fs) []string {
+	t.Helper()
+	var files []string
+	err := afero.Walk(fs, "/", func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		files = append(files, path)
+		return nil
+	})
+	require.NoError(t, err)
+	sort.Strings(files)
+	return files
+}
+
+// The OS name comes from archive entry names and the year and file name from
+// each document's tracking ID. A crafted archive must not be able to write
+// outside the cvrf/suse tree, and bad entries are skipped, not fatal.
+func TestConfig_Update_UnsafePaths(t *testing.T) {
+	archive := createArchiveFromEntries(t, [][2]string{
+		{"cvrf-suse-su-2099-0001-1.xml", cvrfDoc("SUSE-SU-2099:0001-1")},
+		// year escapes via the tracking ID
+		{"cvrf-suse-su-2099-0002-1.xml", cvrfDoc("SUSE-SU-2099/../../../../../../../escaped:pwn-1")},
+		// file name escapes via the tracking ID
+		{"cvrf-suse-su-2099-0003-1.xml", cvrfDoc("SUSE-SU-2099:0003/../../../../nvd/x-1")},
+		// OS name escapes via the archive entry name
+		{"cvrf-..-su-2099-0004-1.xml", cvrfDoc("SUSE-SU-2099:0004-1")},
+		{"cvrf-.-su-2099-0005-1.xml", cvrfDoc("SUSE-SU-2099:0005-1")},
+		// absolute path in the tracking ID
+		{"cvrf-suse-su-2099-0006-1.xml", cvrfDoc("SUSE-SU-/escaped:0006-1")},
+	})
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(archive)
+	}))
+	defer ts.Close()
+
+	c := cvrf.Config{
+		VulnListDir: "/tmp/vuln-list",
+		URL:         ts.URL + "/cvrf.tar.gz",
+		AppFs:       afero.NewMemMapFs(),
+	}
+	require.NoError(t, c.Update())
+
+	assert.Equal(t, []string{"/tmp/vuln-list/cvrf/suse/suse/2099/SUSE-SU-2099-0001-1.json"}, walkFiles(t, c.AppFs))
+}
+
+// The archive is a third-party download that ends up as files in vuln-list,
+// so it must not be fetched over plain HTTP.
+func TestNewConfig_UsesHTTPS(t *testing.T) {
+	assert.Equal(t, "https://ftp.suse.com/pub/projects/security/cvrf.tar.bz2", cvrf.NewConfig().URL)
+}
+
+// Advisories SUSE drops from the archive (and junk such as a page saved as
+// "403 Forbidden") must disappear once a complete archive has been
+// processed. A broken or empty archive must leave the tree alone.
+func TestConfig_Update_RemovesStaleFiles(t *testing.T) {
+	const (
+		stale       = "/tmp/cvrf/suse/suse/2010/SUSE-SU-2010-0001-1.json"
+		junk        = "/tmp/cvrf/suse/suse/403 Forbidden/SUSE-SU-403 Forbidden-1.json"
+		rewritten   = "/tmp/cvrf/suse/suse/2019/SUSE-SU-2019-1608-1.json"
+		otherSource = "/tmp/cvrf/other/x.json"
+	)
+	testCases := []struct {
+		name      string
+		archive   []byte
+		wantErr   string
+		wantStale bool
+	}{
+		{
+			name:    "complete archive",
+			archive: createArchive(t, "testdata/cvrf"),
+		},
+		{
+			name:      "broken XML",
+			archive:   createArchive(t, "testdata/broken-cvrf"),
+			wantErr:   "failed to decode SUSE XML",
+			wantStale: true,
+		},
+		{
+			name:      "archive without advisories",
+			archive:   createArchiveFromEntries(t, [][2]string{{"LICENSE", "license text"}}),
+			wantErr:   "no advisories",
+			wantStale: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write(tc.archive)
+			}))
+			defer ts.Close()
+
+			appFs := afero.NewMemMapFs()
+			for _, f := range []string{stale, junk, rewritten, otherSource} {
+				require.NoError(t, afero.WriteFile(appFs, f, []byte("{}"), 0600))
+			}
+
+			c := cvrf.Config{
+				VulnListDir: "/tmp",
+				URL:         ts.URL + "/cvrf.tar.gz",
+				AppFs:       appFs,
+			}
+			err := c.Update()
+			files := walkFiles(t, appFs)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				assert.Subset(t, files, []string{stale, junk, rewritten, otherSource})
+				return
+			}
+			require.NoError(t, err)
+			assert.NotContains(t, files, stale)
+			assert.NotContains(t, files, junk)
+			assert.Contains(t, files, rewritten)
+			assert.Contains(t, files, otherSource)
+			assert.Len(t, files, 12, "11 advisories from the archive plus the other source")
+
+			for _, dir := range []string{"/tmp/cvrf/suse/suse/2010", "/tmp/cvrf/suse/suse/403 Forbidden"} {
+				ok, err := afero.DirExists(appFs, dir)
+				require.NoError(t, err)
+				assert.False(t, ok, "empty directory %s is removed", dir)
+			}
+			b, err := afero.ReadFile(appFs, rewritten)
+			require.NoError(t, err)
+			assert.NotEqual(t, "{}", string(b), "advisory is rewritten from the archive")
 		})
 	}
 }

@@ -198,3 +198,127 @@ func TestConfig_Update(t *testing.T) {
 		})
 	}
 }
+
+// Release names, package names and CVE-IDs all come from the feed and become
+// paths; the release directory is even removed before it is rewritten. Unsafe
+// values must be skipped without touching anything outside the photon tree.
+func TestConfig_Update_UnsafePaths(t *testing.T) {
+	versions := `{"branches": ["1.0", "..", "../nvd", "x/../../y", ""]}`
+	advisories := `[
+  {"cve_id": "CVE-2099-0001", "pkg": "zlib", "cve_score": 7.5, "aff_ver": "all versions before 1.2.8-5.ph1 are vulnerable", "res_ver": "1.2.8-5.ph1"},
+  {"cve_id": "CVE-2099-0002", "pkg": "../../nvd/2099", "cve_score": 7.5, "aff_ver": "NA", "res_ver": "1.0-1.ph1"},
+  {"cve_id": "CVE-2099-0003", "pkg": "..", "cve_score": 7.5, "aff_ver": "NA", "res_ver": "1.0-1.ph1"},
+  {"cve_id": "CVE-2099/../../../x-0004", "pkg": "zlib", "cve_score": 7.5, "aff_ver": "NA", "res_ver": "1.0-1.ph1"}
+]`
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/photon_cve_metadata/photon_versions.json":
+			_, _ = w.Write([]byte(versions))
+		case r.URL.Path == "/photon_cve_metadata/cve_data_photon1.0.json":
+			_, _ = w.Write([]byte(advisories))
+		default:
+			// any other release resolves to an empty, valid advisory list
+			_, _ = w.Write([]byte("[]"))
+		}
+	}))
+	defer ts.Close()
+
+	appFs := afero.NewMemMapFs()
+	otherSource := "/tmp/nvd/2099/CVE-2099-9999.json"
+	require.NoError(t, afero.WriteFile(appFs, otherSource, []byte("{}"), 0600))
+
+	c := photon.Config{
+		VulnListDir: "/tmp",
+		URL:         ts.URL + "/photon_cve_metadata/",
+		AppFs:       appFs,
+		Retry:       0,
+	}
+	require.NoError(t, c.Update())
+
+	assert.ElementsMatch(t, []string{otherSource, "/tmp/photon/1.0/zlib/CVE-2099-0001.json"}, listFiles(t, appFs))
+}
+
+// listFiles returns every regular file in fs.
+func listFiles(t *testing.T, fs afero.Fs) []string {
+	t.Helper()
+	var files []string
+	err := afero.Walk(fs, "/", func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		files = append(files, path)
+		return nil
+	})
+	require.NoError(t, err)
+	return files
+}
+
+// serveFeed serves photon_versions.json and one advisory file per release.
+func serveFeed(t *testing.T, versions string, advisories map[string]string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/photon_cve_metadata/photon_versions.json" {
+			_, _ = w.Write([]byte(versions))
+			return
+		}
+		for version, file := range advisories {
+			if r.URL.Path == "/photon_cve_metadata/cve_data_photon"+version+".json" {
+				b, err := os.ReadFile(file)
+				require.NoError(t, err)
+				_, _ = w.Write(b)
+				return
+			}
+		}
+		http.NotFound(w, r)
+	}))
+}
+
+// "UNK-*" and "Re" placeholders must be skipped even when they carry real
+// version bounds; they used to fall through to the CVE-ID format check and
+// abort the whole update.
+func TestConfig_Update_UnknownIDs(t *testing.T) {
+	ts := serveFeed(t, `{"branches": ["3.0"]}`, map[string]string{
+		"3.0": "testdata/cve_data_photon_unknown_ids.json",
+	})
+	defer ts.Close()
+
+	c := photon.Config{
+		VulnListDir: "/tmp",
+		URL:         ts.URL + "/photon_cve_metadata/",
+		AppFs:       afero.NewMemMapFs(),
+		Retry:       0,
+	}
+	require.NoError(t, c.Update())
+
+	assert.Equal(t, []string{"/tmp/photon/3.0/ansible/CVE-2019-3828.json"}, listFiles(t, c.AppFs))
+}
+
+// The feed's status tells "Not Affected" NA/NA rows apart from affected
+// ones; without it consumers treat res_ver "NA" as affected at every version.
+func TestConfig_Update_Status(t *testing.T) {
+	ts := serveFeed(t, `{"branches": ["5.0"]}`, map[string]string{
+		"5.0": "testdata/cve_data_photon_status.json",
+	})
+	defer ts.Close()
+
+	c := photon.Config{
+		VulnListDir: "/tmp",
+		URL:         ts.URL + "/photon_cve_metadata/",
+		AppFs:       afero.NewMemMapFs(),
+		Retry:       0,
+	}
+	require.NoError(t, c.Update())
+
+	want := map[string]string{
+		"/tmp/photon/5.0/curl/CVE-2024-11053.json": `{"os_version": "5.0", "cve_id": "CVE-2024-11053", "pkg": "curl", "cve_score": 3.4,
+			"aff_ver": "all versions before 8.12.0-1.ph5 are vulnerable", "res_ver": "8.12.0-1.ph5", "status": "Fixed"}`,
+		"/tmp/photon/5.0/curl/CVE-2024-0853.json": `{"os_version": "5.0", "cve_id": "CVE-2024-0853", "pkg": "curl", "cve_score": 5.3,
+			"aff_ver": "NA", "res_ver": "NA", "status": "Not Affected"}`,
+	}
+	assert.ElementsMatch(t, []string{"/tmp/photon/5.0/curl/CVE-2024-11053.json", "/tmp/photon/5.0/curl/CVE-2024-0853.json"}, listFiles(t, c.AppFs))
+	for path, wantJSON := range want {
+		got, err := afero.ReadFile(c.AppFs, path)
+		require.NoError(t, err)
+		assert.JSONEq(t, wantJSON, string(got), path)
+	}
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "cve_id": "UNK-1",
+    "pkg": "curl",
+    "cve_score": 6.7,
+    "aff_ver": "all versions before 8.0.1-1.ph3 are vulnerable",
+    "res_ver": "8.0.1-1.ph3"
+  },
+  {
+    "cve_id": "Re",
+    "pkg": "linux",
+    "cve_score": 5.0,
+    "aff_ver": "all versions before 4.19.1-1.ph3 are vulnerable",
+    "res_ver": "4.19.1-1.ph3"
+  },
+  {
+    "cve_id": "UNK-2",
+    "pkg": "curl",
+    "cve_score": 6.7,
+    "aff_ver": "NA",
+    "res_ver": "NA"
+  },
+  {
+    "cve_id": "CVE-2019-3828",
+    "pkg": "ansible",
+    "cve_score": 4.2,
+    "aff_ver": "all versions before 2.7.6-2.ph3 are vulnerable",
+    "res_ver": "2.7.6-2.ph3"
+  }
+]

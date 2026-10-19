@@ -28,16 +28,17 @@ vuln-list-update -target <target>
 | `photon` | Photon CVE metadata (`packages.broadcom.com`) | `photon` |
 | `redhat` | Red Hat Security Data API (`-years` required) | `redhat` |
 | `rocky` | Rocky Linux RLSA updateinfo | `rocky` |
-| `seal` | Seal Security feeds (`vulnfeed.sealsecurity.io`) | `seal/{renamed,noprefix}` |
 | `suse-cvrf` | SUSE CVRF archive (`ftp.suse.com`) | `cvrf/suse` |
 | `ubuntu` | Ubuntu CVE tracker | `ubuntu` |
 | `wolfi` | Wolfi secdb | `wolfi` |
 
-`bottlerocket`, `oracle-oval` and `seal` are additions carried by this fork
-(ported from upstream aquasecurity PRs #406, #441, #364/#461). Sources whose
-data vulnerability-db ingests through OSV feeds instead (osv, github-advisories,
-gitlab/glad, kevc, cwe, mariner, minimos, redhat-csaf, eoldates, echo) are
-deliberately not carried.
+`bottlerocket` and `oracle-oval` are additions carried by this fork (ported
+from upstream aquasecurity PRs #406 and #441). Sources whose data
+vulnerability-db ingests directly or through OSV feeds instead (osv, seal,
+github-advisories, gitlab/glad, kevc, cwe, mariner, minimos, redhat-csaf,
+eoldates, echo) are deliberately not carried. Seal in particular is read by
+vulnerability-db straight from the `vulnfeed.sealsecurity.io` zips, so this
+repository does not mirror it.
 
 The scheduled workflow in `.github/workflows/update.yml` runs every target on
 its own `if: always()` step, retries failed updates three times with a

@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -114,17 +115,78 @@ func TrimSpaceNewline(str string) string {
 	return strings.Trim(str, "\r\n")
 }
 
-// FetchURL returns HTTP response body with retry
+const (
+	// maxRetryBackoff caps the quadratic part of FetchURL's wait between
+	// attempts. Without it the waits grow without bound: 20 retries used to
+	// add up to about 49 minutes for a single URL.
+	maxRetryBackoff = 30 * time.Second
+	// maxRetryJitter is the exclusive upper bound, in seconds, of the random
+	// jitter added to every wait.
+	maxRetryJitter = 10
+)
+
+// HTTPStatusError is returned when a server answers with a status other than 200.
+type HTTPStatusError struct {
+	URL        string
+	StatusCode int
+}
+
+func (e *HTTPStatusError) Error() string {
+	return fmt.Sprintf("HTTP error. status code: %d, url: %s", e.StatusCode, e.URL)
+}
+
+// retryBackoff is the deterministic part of the wait before retry i (1-based).
+func retryBackoff(i int) time.Duration {
+	return min(time.Duration(i*i)*time.Second, maxRetryBackoff)
+}
+
+// retryWait returns how long FetchURL sleeps before retry i (1-based).
+// It is a variable so tests can avoid real sleeps.
+var retryWait = func(i int) time.Duration {
+	return retryBackoff(i) + time.Duration(RandInt()%maxRetryJitter)*time.Second
+}
+
+// MaxRetryWait returns the longest FetchURL can spend waiting between
+// attempts for the given number of retries, i.e. its worst-case retry budget
+// for one URL on top of the requests themselves.
+func MaxRetryWait(retry int) time.Duration {
+	var total time.Duration
+	for i := 1; i <= retry; i++ {
+		total += retryBackoff(i) + (maxRetryJitter-1)*time.Second
+	}
+	return total
+}
+
+// isRetryable reports whether a failed fetch may succeed if tried again.
+// Client errors are permanent (a missing advisory stays missing), except
+// 408 Request Timeout, 425 Too Early and 429 Too Many Requests.
+func isRetryable(err error) bool {
+	var statusErr *HTTPStatusError
+	if !errors.As(err, &statusErr) {
+		return true
+	}
+	switch statusErr.StatusCode {
+	case http.StatusRequestTimeout, http.StatusTooEarly, http.StatusTooManyRequests:
+		return true
+	}
+	return statusErr.StatusCode < 400 || statusErr.StatusCode >= 500
+}
+
+// FetchURL returns HTTP response body with retry. Permanent client errors
+// (see isRetryable) are returned after the first attempt.
 func FetchURL(url, apikey string, retry int) (res []byte, err error) {
 	for i := 0; i <= retry; i++ {
 		if i > 0 {
-			wait := math.Pow(float64(i), 2) + float64(RandInt()%10)
-			log.Printf("retry after %f seconds\n", wait)
-			time.Sleep(time.Duration(time.Duration(wait) * time.Second))
+			wait := retryWait(i)
+			log.Printf("retry after %s\n", wait)
+			time.Sleep(wait)
 		}
 		res, err = fetchURL(url, map[string]string{"api-key": apikey})
 		if err == nil {
 			return res, nil
+		}
+		if !isRetryable(err) {
+			break
 		}
 	}
 	return nil, xerrors.Errorf("failed to fetch URL: %w", err)
@@ -144,8 +206,8 @@ func fetchURL(url string, headers map[string]string) ([]byte, error) {
 	if len(errs) > 0 {
 		return nil, xerrors.Errorf("HTTP error. url: %s, err: %w", url, errs[0])
 	}
-	if resp.StatusCode != 200 {
-		return nil, xerrors.Errorf("HTTP error. status code: %d, url: %s", resp.StatusCode, url)
+	if resp.StatusCode != http.StatusOK {
+		return nil, &HTTPStatusError{URL: url, StatusCode: resp.StatusCode}
 	}
 	return body, nil
 }
