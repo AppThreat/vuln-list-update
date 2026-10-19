@@ -114,5 +114,7 @@
   ],
   "Issued": {
     "Date": "2009-08-10"
-  }
+  },
+  "DefinitionID": "oval:com.oracle.elsa:def:20091203",
+  "DefinitionVersion": "501"
 }

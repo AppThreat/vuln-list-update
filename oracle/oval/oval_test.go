@@ -59,6 +59,18 @@ func TestConfig_Update(t *testing.T) {
 			expectedErrorMsg: "",
 		},
 		{
+			// Real multi-release erratum: the affected CPE list (ELS and
+			// Exadata channels) and the definition id/version are kept.
+			name:  "affected CPE list and definition attributes",
+			appFs: afero.NewMemMapFs(),
+			bzip2FileNames: map[string]string{
+				"/oval/com.oracle.elsa-all.xml.bz2": "testdata/elsa-with-cpes.xml.bz2",
+			},
+			goldenFiles: map[string]string{
+				"/tmp/oval/oracle/2023/ELSA-2023-12143.json": "testdata/golden/ELSA-2023-12143.json",
+			},
+		},
+		{
 			// Titles come from the feed and the ELSA ID parsed out of them
 			// becomes the year directory and file name. IDs that would
 			// write outside oval/oracle are skipped without failing.

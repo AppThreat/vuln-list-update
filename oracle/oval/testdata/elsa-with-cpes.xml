@@ -1,0 +1,89 @@
+<oval_definitions xmlns="http://oval.mitre.org/XMLSchema/oval-definitions-5" xmlns:oval="http://oval.mitre.org/XMLSchema/oval-common-5" xmlns:oval-def="http://oval.mitre.org/XMLSchema/oval-definitions-5" xmlns:unix-def="http://oval.mitre.org/XMLSchema/oval-definitions-5#unix" xmlns:red-def="http://oval.mitre.org/XMLSchema/oval-definitions-5#linux" xmlns:ind-def="http://oval.mitre.org/XMLSchema/oval-definitions-5#independent" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://oval.mitre.org/XMLSchema/oval-common-5 oval-common-schema.xsd http://oval.mitre.org/XMLSchema/oval-definitions-5 oval-definitions-schema.xsd http://oval.mitre.org/XMLSchema/oval-definitions-5#unix unix-definitions-schema.xsd http://oval.mitre.org/XMLSchema/oval-definitions-5#linux linux-definitions-schema.xsd">
+<generator>
+<oval:product_name>Oracle Errata System</oval:product_name>
+<oval:product_version>Oracle Linux</oval:product_version>
+<oval:schema_version>5.11</oval:schema_version>
+<oval:timestamp>2026-10-19T15:12:10</oval:timestamp>
+</generator>
+<definitions>
+<definition id="oval:com.oracle.elsa:def:202312143" version="501" class="patch">
+<metadata>
+<title>
+ELSA-2023-12143:  sudo security update (IMPORTANT)
+</title>
+<affected family="unix">
+<platform>Oracle Linux 6</platform>
+<platform>Oracle Linux 8</platform>
+
+</affected>
+<reference source="elsa" ref_id="ELSA-2023-12143" ref_url="https://linux.oracle.com/errata/ELSA-2023-12143.html"/>
+<reference source="CVE" ref_id="CVE-2023-22809" ref_url="https://linux.oracle.com/cve/CVE-2023-22809.html"/>
+
+<description>
+[1.8.6p3-29.0.4.el6_10.3]
+- Fixed Privilege escalation CVE-2023-22809 for sudoedit [Orabug: 35037922]
+
+</description>
+<!--
+ ~~~~~~~~~~~~~~~~~~~~   advisory details   ~~~~~~~~~~~~~~~~~~~ 
+-->
+<advisory>
+<severity>IMPORTANT</severity>
+<rights>Copyright 2023 Oracle, Inc.</rights>
+<issued date="2023-02-28"/>
+<cve cvss3="7.8/CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H" href="https://linux.oracle.com/cve/CVE-2023-22809.html" public="20230118">CVE-2023-22809</cve>
+
+<affected_cpe_list>
+<cpe>cpe:/a:oracle:exadata_dbserver:21.2.24.0.0::ovs3</cpe>
+<cpe>cpe:/a:oracle:linux:6:10:ELS</cpe>
+<cpe>cpe:/a:oracle:exadata_dbserver:23.1.1.0.0::ol8</cpe>
+<cpe>cpe:/a:oracle:exadata_dbserver:21.2.23.0.0::ovs3</cpe>
+</affected_cpe_list>
+</advisory>
+</metadata>
+<criteria operator="OR">
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143001" comment="Oracle Linux 6 is installed"/>
+<criteria operator="OR">
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143002" comment="Oracle Linux arch is x86_64"/>
+<criteria operator="OR">
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143003" comment="sudo is earlier than 0:1.8.6p3-29.0.4.el6_10.3"/>
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143004" comment="sudo is signed with the Oracle Linux 6 key"/>
+</criteria>
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143005" comment="sudo-devel is earlier than 0:1.8.6p3-29.0.4.el6_10.3"/>
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143006" comment="sudo-devel is signed with the Oracle Linux 6 key"/>
+</criteria>
+</criteria>
+</criteria>
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143007" comment="Oracle Linux arch is i686"/>
+<criteria operator="OR">
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143003" comment="sudo is earlier than 0:1.8.6p3-29.0.4.el6_10.3"/>
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143004" comment="sudo is signed with the Oracle Linux 6 key"/>
+</criteria>
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143005" comment="sudo-devel is earlier than 0:1.8.6p3-29.0.4.el6_10.3"/>
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143006" comment="sudo-devel is signed with the Oracle Linux 6 key"/>
+</criteria>
+</criteria>
+</criteria>
+</criteria>
+</criteria>
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143008" comment="Oracle Linux 8 is installed"/>
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143009" comment="Oracle Linux arch is x86_64"/>
+<criteria operator="AND">
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143003" comment="sudo is earlier than 0:1.8.6p3-29.0.4.el6_10.3"/>
+<criterion test_ref="oval:com.oracle.elsa:tst:202312143004" comment="sudo is signed with the Oracle Linux 6 key"/>
+</criteria>
+</criteria>
+</criteria>
+</criteria>
+</definition>
+</definitions>
+</oval_definitions>

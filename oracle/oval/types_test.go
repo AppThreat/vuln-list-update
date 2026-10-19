@@ -171,6 +171,8 @@ func TestRedhatCVEJSON_UnmarshalJSON(t *testing.T) {
 						Issued: oval.Issued{
 							Date: "2007-06-26",
 						},
+						DefinitionID:      "oval:com.oracle.elsa:def:20070057",
+						DefinitionVersion: "501",
 					},
 				},
 			},
@@ -193,4 +195,27 @@ func TestRedhatCVEJSON_UnmarshalJSON(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The affected CPE list carries the channels an erratum ships to (ELS,
+// Exadata, UEK, ...), which Platform alone doesn't tell apart.
+func TestDefinition_AffectedCPEList(t *testing.T) {
+	// trimmed from https://linux.oracle.com/security/oval/com.oracle.elsa-all.xml.bz2
+	xmlByte, err := os.ReadFile("testdata/elsa-with-cpes.xml")
+	require.NoError(t, err)
+
+	got := &oval.Oval{}
+	require.NoError(t, xml.Unmarshal(xmlByte, got))
+	require.Len(t, got.Definitions, 1)
+
+	def := got.Definitions[0]
+	assert.Equal(t, "oval:com.oracle.elsa:def:202312143", def.DefinitionID)
+	assert.Equal(t, "501", def.DefinitionVersion)
+	assert.Equal(t, []string{"Oracle Linux 6", "Oracle Linux 8"}, def.Platform)
+	assert.Equal(t, []string{
+		"cpe:/a:oracle:exadata_dbserver:21.2.24.0.0::ovs3",
+		"cpe:/a:oracle:linux:6:10:ELS",
+		"cpe:/a:oracle:exadata_dbserver:23.1.1.0.0::ol8",
+		"cpe:/a:oracle:exadata_dbserver:21.2.23.0.0::ovs3",
+	}, def.AffectedCPEList)
 }

@@ -66,5 +66,7 @@
   ],
   "Issued": {
     "Date": "2013-11-25"
-  }
+  },
+  "DefinitionID": "oval:com.oracle.elsa:def:20131732",
+  "DefinitionVersion": "501"
 }

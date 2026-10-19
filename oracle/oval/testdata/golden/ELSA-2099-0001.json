@@ -18,5 +18,7 @@
   "Cves": null,
   "Issued": {
     "Date": "2099-01-01"
-  }
+  },
+  "DefinitionID": "oval:com.oracle.elsa:def:20990000",
+  "DefinitionVersion": "501"
 }
