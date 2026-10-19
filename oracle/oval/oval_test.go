@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/appthreat/vuln-list-update/oracle/oval"
 )
@@ -77,7 +78,7 @@ func TestConfig_Update(t *testing.T) {
 				"/oval/com.oracle.elsa-all.xml.bz2": "testdata/all-positive-data.xml.bz2",
 			},
 			goldenFiles:      map[string]string{},
-			expectedErrorMsg: "unable to create a directory: operation not permitted",
+			expectedErrorMsg: "failed to remove Oracle Linux OVAL directory: operation not permitted",
 		},
 		{
 			name:  "invalid title format",
@@ -187,4 +188,84 @@ func TestConfig_Update(t *testing.T) {
 		})
 	}
 
+}
+
+// Advisories Oracle withdraws must disappear from vuln-list on the next run,
+// but only once a complete feed has been downloaded and decoded; a failed
+// or empty fetch must leave the existing tree alone.
+func TestConfig_Update_RemovesWithdrawnAdvisories(t *testing.T) {
+	const (
+		withdrawn   = "/tmp/oval/oracle/2007/ELSA-2007-9999.json"
+		otherSource = "/tmp/oval/redhat/2007/RHSA-2007-0057.json"
+	)
+	testCases := []struct {
+		name          string
+		feed          string // empty: the server answers 404
+		wantErr       string
+		wantWithdrawn bool
+	}{
+		{
+			name: "complete feed replaces the tree",
+			feed: "testdata/elsa-2018-1196-1.xml.bz2",
+		},
+		{
+			name:          "failed download keeps the tree",
+			wantErr:       "failed to fetch Oracle Linux OVAL",
+			wantWithdrawn: true,
+		},
+		{
+			name:          "broken XML keeps the tree",
+			feed:          "testdata/broken-oval-data.xml.bz2",
+			wantErr:       "failed to decode Oracle Linux OVAL XML",
+			wantWithdrawn: true,
+		},
+		{
+			name:          "feed without definitions keeps the tree",
+			feed:          "testdata/no-definitions.xml.bz2",
+			wantErr:       "Oracle Linux OVAL has no definitions",
+			wantWithdrawn: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if tc.feed == "" {
+					http.NotFound(w, r)
+					return
+				}
+				b, err := os.ReadFile(tc.feed)
+				require.NoError(t, err)
+				_, _ = w.Write(b)
+			}))
+			defer ts.Close()
+
+			appFs := afero.NewMemMapFs()
+			require.NoError(t, afero.WriteFile(appFs, withdrawn, []byte("{}"), 0600))
+			require.NoError(t, afero.WriteFile(appFs, otherSource, []byte("{}"), 0600))
+
+			c := oval.Config{
+				VulnListDir: "/tmp",
+				URL:         ts.URL + "/oval/com.oracle.elsa-all.xml.bz2",
+				AppFs:       appFs,
+				Retry:       0,
+			}
+			err := c.Update()
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+				ok, err := afero.Exists(appFs, "/tmp/oval/oracle/2018/ELSA-2018-1196-1.json")
+				require.NoError(t, err)
+				assert.True(t, ok, "advisory from the feed is written")
+			}
+
+			ok, err := afero.Exists(appFs, withdrawn)
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantWithdrawn, ok, "withdrawn advisory present")
+
+			ok, err = afero.Exists(appFs, otherSource)
+			require.NoError(t, err)
+			assert.True(t, ok, "other trees are never touched")
+		})
+	}
 }

@@ -58,8 +58,19 @@ func (c Config) Update() error {
 	if err != nil {
 		return xerrors.Errorf("failed to decode Oracle Linux OVAL XML: %w", err)
 	}
+	if len(ov.Definitions) == 0 {
+		return xerrors.New("Oracle Linux OVAL has no definitions")
+	}
 
+	// The feed is complete, so rewrite the tree from scratch: advisories
+	// Oracle has withdrawn would otherwise stay in vuln-list forever. This
+	// happens only after a successful download and decode, so a failed
+	// fetch never wipes the existing data.
 	dir := filepath.Join(ovalDir, oracleDir)
+	if err = c.AppFs.RemoveAll(filepath.Join(c.VulnListDir, dir)); err != nil {
+		return xerrors.Errorf("failed to remove Oracle Linux OVAL directory: %w", err)
+	}
+
 	bar := pb.StartNew(len(ov.Definitions))
 	for _, def := range ov.Definitions {
 		def.Title = strings.TrimSpace(def.Title)
