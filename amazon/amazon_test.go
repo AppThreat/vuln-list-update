@@ -114,3 +114,13 @@ func getVersionFromURL(urlPath string) string {
 	v := strings.Split(urlPath, "/")
 	return v[1]
 }
+
+// Amazon Linux 2022 is retired: its repomd.xml now answers 403, which
+// failed the amazon target (and the update workflow) on every run.
+func TestDefaultReleases(t *testing.T) {
+	var releases []string
+	for release := range amazon.DefaultMirrorListURI() {
+		releases = append(releases, release)
+	}
+	assert.ElementsMatch(t, []string{"1", "2", "2023"}, releases)
+}

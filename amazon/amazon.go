@@ -27,7 +27,8 @@ var (
 		"1": "http://repo.us-west-2.amazonaws.com/2018.03/updates/x86_64/mirror.list",
 		"2": "https://cdn.amazonlinux.com/2/core/latest/x86_64/mirror.list",
 		// run `dnf repolist all --verbose` inside container to get `Repo-mirrors`
-		"2022": "https://cdn.amazonlinux.com/al2022/core/mirrors/latest/x86_64/mirror.list",
+		// Amazon Linux 2022 is retired and its repository answers 403, so it
+		// is no longer fetched; the published amazon/2022 tree stays as is.
 		"2023": "https://cdn.amazonlinux.com/al2023/core/mirrors/latest/x86_64/mirror.list",
 	}
 )
