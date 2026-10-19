@@ -13,30 +13,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Install dependencies
+    # vuln-list carries tens of GB of history, so a clone-and-rewrite squash
+    # cannot finish: the rewritten commits share no ancestry with main, and
+    # pushing them re-sends every object they reference, far past GitHub's
+    # 2 GB push limit. The current tree is already on GitHub, so make a
+    # parentless commit from it through the API and move main onto it;
+    # nothing is downloaded. A fetcher push that lands between the tip check
+    # and the ref update is dropped, which the next scheduled run restores.
+    - name: Squash main to a single commit
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        REPO: ${{ github.repository_owner }}/vuln-list
       run: |
-        sudo apt-get -y update
-        sudo apt-get -y install git-filter-repo
-
-    - name: Setup GitHub user email and name
-      run: |
-        git config --global user.email "action@github.com"
-        git config --global user.name "GitHub Action"
-
-    - name: Clone a shallow repo
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      with:
-        repository: ${{ github.repository_owner }}/vuln-list
-        token: ${{ secrets.ACCESS_TOKEN }}
-        path: vuln-list
-        fetch-depth: 2000
-        persist-credentials: false
-
-    - name: Squash and push
-      run: |
-        cd vuln-list
-        for commit in $(git rev-list --max-parents=0 HEAD); do
-          git replace -f --graft $commit
-        done
-        git filter-repo --force
-        git push --force --set-upstream https://${{ secrets.ACCESS_TOKEN }}@github.com/${{ github.repository_owner }}/vuln-list.git main
+        tip=$(gh api "repos/${REPO}/git/ref/heads/main" --jq .object.sha)
+        tree=$(gh api "repos/${REPO}/git/commits/${tip}" --jq .tree.sha)
+        squashed=$(jq -n --arg tree "${tree}" --arg message "Squash vuln-list history at ${tip}" \
+          '{tree: $tree, parents: [], message: $message, author: {name: "GitHub Action", email: "action@github.com"}}' \
+          | gh api -X POST "repos/${REPO}/git/commits" --input - --jq .sha)
+        if [[ "$(gh api "repos/${REPO}/git/ref/heads/main" --jq .object.sha)" != "${tip}" ]]; then
+          echo "main moved past ${tip} while squashing; rerun the workflow"
+          exit 1
+        fi
+        gh api -X PATCH "repos/${REPO}/git/refs/heads/main" -f sha="${squashed}" -F force=true --jq .object.sha
