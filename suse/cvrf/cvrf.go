@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	cvrfArchiveURL = "http://ftp.suse.com/pub/projects/security/cvrf.tar.bz2"
+	cvrfArchiveURL = "https://ftp.suse.com/pub/projects/security/cvrf.tar.bz2"
 	cvrfDir        = "cvrf"
 	suseDir        = "suse"
 	retries        = 5

@@ -200,3 +200,9 @@ func TestConfig_Update_UnsafePaths(t *testing.T) {
 
 	assert.Equal(t, []string{"/tmp/vuln-list/cvrf/suse/suse/2099/SUSE-SU-2099-0001-1.json"}, walkFiles(t, c.AppFs))
 }
+
+// The archive is a third-party download that ends up as files in vuln-list,
+// so it must not be fetched over plain HTTP.
+func TestNewConfig_UsesHTTPS(t *testing.T) {
+	assert.Equal(t, "https://ftp.suse.com/pub/projects/security/cvrf.tar.bz2", cvrf.NewConfig().URL)
+}
