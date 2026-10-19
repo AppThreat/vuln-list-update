@@ -72,6 +72,23 @@ func runWithRetry(maxRetries int, delay time.Duration, update func() error) erro
 	return xerrors.Errorf("update failed after %d attempts: %w", maxRetries+1, err)
 }
 
+// selfManagedLastUpdated lists targets that maintain their own entry in
+// last_updated.json, under the same key as the target name. nvd records the
+// end of the window it fetched and deliberately leaves the entry alone when
+// the API returned nothing, so stamping it with "now" here would undo that.
+var selfManagedLastUpdated = map[string]bool{
+	"nvd": true,
+}
+
+// recordLastUpdated stamps the target's last_updated.json entry with now,
+// unless the target manages that entry itself.
+func recordLastUpdated(target string, now time.Time) error {
+	if selfManagedLastUpdated[target] {
+		return nil
+	}
+	return utils.SetLastUpdatedDate(target, now)
+}
+
 func run() error {
 	now := time.Now().UTC()
 	gc := &git.Config{}
@@ -218,7 +235,7 @@ func run() error {
 		return nil
 	}
 
-	if err := utils.SetLastUpdatedDate(*target, now); err != nil {
+	if err := recordLastUpdated(*target, now); err != nil {
 		return err
 	}
 
