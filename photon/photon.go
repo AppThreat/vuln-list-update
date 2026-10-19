@@ -103,12 +103,11 @@ func (c Config) saveCVEPerPkg(dirName, pkgName, cveID string, cve PhotonCVE) err
 		return nil
 	}
 
-	// Only skip unknown CVE entries (IDs starting with "UNK-" or "Re") that lack version information.
-	// Valid CVEs (e.g., "CVE-...") with both ResVer and AffVer as "NA" are still saved,
-	// as their status (e.g., "Not Affected") may be meaningful for reporting.
-	if (strings.HasPrefix(cveID, "UNK-") || cveID == "Re") &&
-		(cve.ResVer == "" || cve.ResVer == "NA") &&
-		(cve.AffVer == "" || cve.AffVer == "NA") {
+	// Placeholder IDs ("UNK-<n>" and the truncated "Re") don't name a
+	// vulnerability and can't pass the CVE-ID check below, so skip them
+	// whether or not they carry version information; otherwise one such
+	// entry would abort the whole Photon update.
+	if strings.HasPrefix(cveID, "UNK-") || cveID == "Re" {
 		log.Printf("Skip unknown CVE entry: %s", cveID)
 		return nil
 	}

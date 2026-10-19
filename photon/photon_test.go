@@ -235,8 +235,14 @@ func TestConfig_Update_UnsafePaths(t *testing.T) {
 	}
 	require.NoError(t, c.Update())
 
+	assert.ElementsMatch(t, []string{otherSource, "/tmp/photon/1.0/zlib/CVE-2099-0001.json"}, listFiles(t, appFs))
+}
+
+// listFiles returns every regular file in fs.
+func listFiles(t *testing.T, fs afero.Fs) []string {
+	t.Helper()
 	var files []string
-	err := afero.Walk(appFs, "/", func(path string, info os.FileInfo, err error) error {
+	err := afero.Walk(fs, "/", func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}
@@ -244,5 +250,45 @@ func TestConfig_Update_UnsafePaths(t *testing.T) {
 		return nil
 	})
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []string{otherSource, "/tmp/photon/1.0/zlib/CVE-2099-0001.json"}, files)
+	return files
+}
+
+// serveFeed serves photon_versions.json and one advisory file per release.
+func serveFeed(t *testing.T, versions string, advisories map[string]string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/photon_cve_metadata/photon_versions.json" {
+			_, _ = w.Write([]byte(versions))
+			return
+		}
+		for version, file := range advisories {
+			if r.URL.Path == "/photon_cve_metadata/cve_data_photon"+version+".json" {
+				b, err := os.ReadFile(file)
+				require.NoError(t, err)
+				_, _ = w.Write(b)
+				return
+			}
+		}
+		http.NotFound(w, r)
+	}))
+}
+
+// "UNK-*" and "Re" placeholders must be skipped even when they carry real
+// version bounds; they used to fall through to the CVE-ID format check and
+// abort the whole update.
+func TestConfig_Update_UnknownIDs(t *testing.T) {
+	ts := serveFeed(t, `{"branches": ["3.0"]}`, map[string]string{
+		"3.0": "testdata/cve_data_photon_unknown_ids.json",
+	})
+	defer ts.Close()
+
+	c := photon.Config{
+		VulnListDir: "/tmp",
+		URL:         ts.URL + "/photon_cve_metadata/",
+		AppFs:       afero.NewMemMapFs(),
+		Retry:       0,
+	}
+	require.NoError(t, c.Update())
+
+	assert.Equal(t, []string{"/tmp/photon/3.0/ansible/CVE-2019-3828.json"}, listFiles(t, c.AppFs))
 }
