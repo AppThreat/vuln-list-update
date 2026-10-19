@@ -292,3 +292,33 @@ func TestConfig_Update_UnknownIDs(t *testing.T) {
 
 	assert.Equal(t, []string{"/tmp/photon/3.0/ansible/CVE-2019-3828.json"}, listFiles(t, c.AppFs))
 }
+
+// The feed's status tells "Not Affected" NA/NA rows apart from affected
+// ones; without it consumers treat res_ver "NA" as affected at every version.
+func TestConfig_Update_Status(t *testing.T) {
+	ts := serveFeed(t, `{"branches": ["5.0"]}`, map[string]string{
+		"5.0": "testdata/cve_data_photon_status.json",
+	})
+	defer ts.Close()
+
+	c := photon.Config{
+		VulnListDir: "/tmp",
+		URL:         ts.URL + "/photon_cve_metadata/",
+		AppFs:       afero.NewMemMapFs(),
+		Retry:       0,
+	}
+	require.NoError(t, c.Update())
+
+	want := map[string]string{
+		"/tmp/photon/5.0/curl/CVE-2024-11053.json": `{"os_version": "5.0", "cve_id": "CVE-2024-11053", "pkg": "curl", "cve_score": 3.4,
+			"aff_ver": "all versions before 8.12.0-1.ph5 are vulnerable", "res_ver": "8.12.0-1.ph5", "status": "Fixed"}`,
+		"/tmp/photon/5.0/curl/CVE-2024-0853.json": `{"os_version": "5.0", "cve_id": "CVE-2024-0853", "pkg": "curl", "cve_score": 5.3,
+			"aff_ver": "NA", "res_ver": "NA", "status": "Not Affected"}`,
+	}
+	assert.ElementsMatch(t, []string{"/tmp/photon/5.0/curl/CVE-2024-11053.json", "/tmp/photon/5.0/curl/CVE-2024-0853.json"}, listFiles(t, c.AppFs))
+	for path, wantJSON := range want {
+		got, err := afero.ReadFile(c.AppFs, path)
+		require.NoError(t, err)
+		assert.JSONEq(t, wantJSON, string(got), path)
+	}
+}

@@ -11,4 +11,7 @@ type PhotonCVE struct {
 	CveScore  float64 `json:"cve_score"`
 	AffVer    string  `json:"aff_ver"`
 	ResVer    string  `json:"res_ver"`
+	// Status is the feed's verdict for the package, e.g. "Fixed" or
+	// "Not Affected"; it is what distinguishes an unaffected NA/NA row.
+	Status string `json:"status,omitempty"`
 }
