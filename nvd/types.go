@@ -60,6 +60,9 @@ type CvssMetricV40 struct {
 }
 
 // CvssDataV40 is based on https://csrc.nist.gov/schema/nvd/api/2.0/external/cvss-v4.0.json
+// The JSON tags must match the schema's property names exactly, including the
+// capitalised Safety, Automatable and Recovery: decoding is case-insensitive,
+// but the files written to vuln-list must keep NVD's spelling.
 type CvssDataV40 struct {
 	Version                                 string  `json:"version"`
 	VectorString                            string  `json:"vectorString"`
@@ -70,32 +73,33 @@ type CvssDataV40 struct {
 	AttackRequirements                      string  `json:"attackRequirements,omitempty"`
 	PrivilegesRequired                      string  `json:"privilegesRequired,omitempty"`
 	UserInteraction                         string  `json:"userInteraction,omitempty"`
-	VulnerableSystemConfidentiality         string  `json:"vulnerableSystemConfidentiality,omitempty"` // schema property: vulnConfidentialityImpact
-	VulnerableSystemIntegrity               string  `json:"vulnerableSystemIntegrity,omitempty"`       // schema property: vulnIntegrityImpact
-	VulnerableSystemAvailability            string  `json:"vulnerableSystemAvailability,omitempty"`    // schema property: vulnAvailabilityImpact
-	SubsequentSystemConfidentiality         string  `json:"subsequentSystemConfidentiality,omitempty"` // schema property: subConfidentialityImpact
-	SubsequentSystemIntegrity               string  `json:"subsequentSystemIntegrity,omitempty"`       // schema property: subIntegrityImpact
-	SubsequentSystemAvailability            string  `json:"subsequentSystemAvailability,omitempty"`    // schema property: subAvailabilityImpact
+	VulnerableSystemConfidentiality         string  `json:"vulnConfidentialityImpact,omitempty"`
+	VulnerableSystemIntegrity               string  `json:"vulnIntegrityImpact,omitempty"`
+	VulnerableSystemAvailability            string  `json:"vulnAvailabilityImpact,omitempty"`
+	SubsequentSystemConfidentiality         string  `json:"subConfidentialityImpact,omitempty"`
+	SubsequentSystemIntegrity               string  `json:"subIntegrityImpact,omitempty"`
+	SubsequentSystemAvailability            string  `json:"subAvailabilityImpact,omitempty"`
 	ExploitMaturity                         string  `json:"exploitMaturity,omitempty"`
-	ConfidentialityRequirement              string  `json:"confidentialityRequirements,omitempty"`
-	IntegrityRequirement                    string  `json:"integrityRequirements,omitempty"`
-	AvailabilityRequirement                 string  `json:"availabilityRequirements,omitempty"`
+	ConfidentialityRequirement              string  `json:"confidentialityRequirement,omitempty"`
+	IntegrityRequirement                    string  `json:"integrityRequirement,omitempty"`
+	AvailabilityRequirement                 string  `json:"availabilityRequirement,omitempty"`
 	ModifiedAttackVector                    string  `json:"modifiedAttackVector,omitempty"`
 	ModifiedAttackComplexity                string  `json:"modifiedAttackComplexity,omitempty"`
 	ModifiedAttackRequirements              string  `json:"modifiedAttackRequirements,omitempty"`
 	ModifiedPrivilegesRequired              string  `json:"modifiedPrivilegesRequired,omitempty"`
 	ModifiedUserInteraction                 string  `json:"modifiedUserInteraction,omitempty"`
-	ModifiedVulnerableSystemConfidentiality string  `json:"modifiedVulnerableSystemConfidentiality,omitempty"` // schema property: modifiedVulnConfidentialityImpact
-	ModifiedVulnerableSystemIntegrity       string  `json:"modifiedVulnerableSystemIntegrity,omitempty"`       // schema property: modifiedVulnIntegrityImpact
-	ModifiedVulnerableSystemAvailability    string  `json:"modifiedVulnerableSystemAvailability,omitempty"`    // schema property: modifiedVulnAvailabilityImpact
-	ModifiedSubsequentSystemConfidentiality string  `json:"modifiedSubsequentSystemConfidentiality,omitempty"` // schema property: modifiedSubConfidentialityImpact
-	ModifiedSubsequentSystemAvailability    string  `json:"modifiedSubsequentSystemAvailability,omitempty"`    // schema property: modifiedSubAvailabilityImpact
-	Safety                                  string  `json:"safety,omitempty"`                                  // schema property: Safety
-	Automatable                             string  `json:"automatable,omitempty"`                             // schema property: Automatable
-	ProviderUrgency                         string  `json:"providerUrgency,omitempty"`
-	Recovery                                string  `json:"recovery,omitempty"` // schema property: Recovery
+	ModifiedVulnerableSystemConfidentiality string  `json:"modifiedVulnConfidentialityImpact,omitempty"`
+	ModifiedVulnerableSystemIntegrity       string  `json:"modifiedVulnIntegrityImpact,omitempty"`
+	ModifiedVulnerableSystemAvailability    string  `json:"modifiedVulnAvailabilityImpact,omitempty"`
+	ModifiedSubsequentSystemConfidentiality string  `json:"modifiedSubConfidentialityImpact,omitempty"`
+	ModifiedSubsequentSystemIntegrity       string  `json:"modifiedSubIntegrityImpact,omitempty"`
+	ModifiedSubsequentSystemAvailability    string  `json:"modifiedSubAvailabilityImpact,omitempty"`
+	Safety                                  string  `json:"Safety,omitempty"`
+	Automatable                             string  `json:"Automatable,omitempty"`
+	Recovery                                string  `json:"Recovery,omitempty"`
 	ValueDensity                            string  `json:"valueDensity,omitempty"`
 	VulnerabilityResponseEffort             string  `json:"vulnerabilityResponseEffort,omitempty"`
+	ProviderUrgency                         string  `json:"providerUrgency,omitempty"`
 	ThreatScore                             float64 `json:"threatScore,omitempty"`
 	ThreatSeverity                          string  `json:"threatSeverity,omitempty"`
 	EnvironmentalScore                      float64 `json:"environmentalScore,omitempty"`
