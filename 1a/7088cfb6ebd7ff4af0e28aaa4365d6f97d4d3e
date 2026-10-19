@@ -1,0 +1,23 @@
+bottlerocket/bottlerocket.go
+  s_0417f7ab5a351c::t_a510997e5cd94a 58-67
+bottlerocket/bottlerocket_test.go
+  s_0417f7ab5a351c::t_bc8124886c10ab 95-96,98-99,102,153-218
+bottlerocket/types.go
+  s_0417f7ab5a351c::t_b85fee8283d9a4 3-7,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1a7088cfb6ebd7ff4af0e28aaa4365d6f97d4d3e",
+  "prompts": {},
+  "sessions": {
+    "s_0417f7ab5a351c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d133fbd-49f0-47a2-89d8-f4b2717d41b1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
