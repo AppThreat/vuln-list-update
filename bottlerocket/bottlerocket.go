@@ -70,6 +70,13 @@ func (c *Config) Update() error {
 
 	bar := pb.StartNew(len(updates.Updates))
 	for _, update := range updates.Updates {
+		// The ID comes from the feed and becomes a file name, so it must not
+		// be able to point outside the bottlerocket directory.
+		if err := utils.ValidatePathComponent(update.ID); err != nil {
+			log.Printf("Skip Bottlerocket advisory with an unsafe ID: %v", err)
+			bar.Increment()
+			continue
+		}
 		filePath := filepath.Join(dir, fmt.Sprintf("%s.json", update.ID))
 		if err := utils.Write(filePath, update); err != nil {
 			return xerrors.Errorf("failed to write Bottlerocket advisory: %w", err)

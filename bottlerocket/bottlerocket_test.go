@@ -1,7 +1,10 @@
 package bottlerocket_test
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -78,4 +81,68 @@ func TestConfig_Update(t *testing.T) {
 			}
 		})
 	}
+}
+
+// gzipUpdateInfo builds an updateinfo.xml.gz body holding one update per ID.
+func gzipUpdateInfo(t *testing.T, ids ...string) []byte {
+	t.Helper()
+	var xmlBody bytes.Buffer
+	xmlBody.WriteString(`<?xml version="1.0"?>` + "\n<updates>\n")
+	for _, id := range ids {
+		fmt.Fprintf(&xmlBody, "<update><id>%s</id><title>kernel CVE-2099-0001</title></update>\n", id)
+	}
+	xmlBody.WriteString("</updates>\n")
+
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	_, err := gw.Write(xmlBody.Bytes())
+	require.NoError(t, err)
+	require.NoError(t, gw.Close())
+	return buf.Bytes()
+}
+
+// listFiles returns every regular file under root, relative to root.
+func listFiles(t *testing.T, root string) []string {
+	t.Helper()
+	var files []string
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		rel, err := filepath.Rel(root, path)
+		files = append(files, rel)
+		return err
+	})
+	require.NoError(t, err)
+	return files
+}
+
+// Advisory IDs come from the feed and become file names. IDs that would
+// write into another source's tree, or outside the vuln-list directory
+// altogether, must be skipped without failing the whole update.
+func TestConfig_Update_UnsafeIDs(t *testing.T) {
+	body := gzipUpdateInfo(t,
+		"BRSA-good",
+		"../nvd/2099/CVE-2099-0001",
+		"a/../../x",
+		"../../outside",
+		"/abs/escape",
+		`..\..\win`,
+		"..",
+		"",
+	)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(body)
+	}))
+	defer ts.Close()
+
+	root := t.TempDir()
+	vulnListDir := filepath.Join(root, "vuln-list")
+	c := bottlerocket.NewConfig(
+		bottlerocket.WithURL(ts.URL+"/updateinfo.xml.gz"),
+		bottlerocket.WithVulnListDir(vulnListDir),
+	)
+	require.NoError(t, c.Update())
+
+	assert.Equal(t, []string{filepath.Join("vuln-list", "bottlerocket", "BRSA-good.json")}, listFiles(t, root))
 }

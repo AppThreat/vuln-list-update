@@ -58,6 +58,19 @@ func TestConfig_Update(t *testing.T) {
 			expectedErrorMsg: "",
 		},
 		{
+			// Titles come from the feed and the ELSA ID parsed out of them
+			// becomes the year directory and file name. IDs that would
+			// write outside oval/oracle are skipped without failing.
+			name:  "unsafe ELSA IDs",
+			appFs: afero.NewMemMapFs(),
+			bzip2FileNames: map[string]string{
+				"/oval/com.oracle.elsa-all.xml.bz2": "testdata/unsafe-elsa-ids.xml.bz2",
+			},
+			goldenFiles: map[string]string{
+				"/tmp/oval/oracle/2099/ELSA-2099-0001.json": "testdata/golden/ELSA-2099-0001.json",
+			},
+		},
+		{
 			name:  "invalid filesystem write read only path",
 			appFs: afero.NewReadOnlyFs(afero.NewOsFs()),
 			bzip2FileNames: map[string]string{

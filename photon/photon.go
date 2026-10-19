@@ -62,6 +62,13 @@ func (c Config) Update() error {
 		if strings.ToLower(version) == "dev" {
 			continue
 		}
+		// Release names come from the feed, and the release directory is
+		// removed below, so a name must not reach outside the photon tree.
+		dirPath, err := utils.SafeJoin(filepath.Join(c.VulnListDir, photonDir), version)
+		if err != nil {
+			log.Printf("Skip Photon release with an unsafe name: %v", err)
+			continue
+		}
 		res, err := utils.FetchURL(c.URL+fmt.Sprintf(advisoryFormat, version), "", c.Retry)
 		if err != nil {
 			return xerrors.Errorf("failed to fetch Photon advisory: %w", err)
@@ -71,7 +78,6 @@ func (c Config) Update() error {
 			return xerrors.Errorf("failed to unmarshal Photon advisory: %w", err)
 		}
 		dir := filepath.Join(photonDir, version)
-		dirPath := filepath.Join(c.VulnListDir, dir)
 		log.Printf("Remove Photon %s directory %s", version, dirPath)
 		if err := c.AppFs.RemoveAll(dirPath); err != nil {
 			return xerrors.Errorf("failed to remove Photon %s directory: %w", version, err)
@@ -113,7 +119,16 @@ func (c Config) saveCVEPerPkg(dirName, pkgName, cveID string, cve PhotonCVE) err
 		return xerrors.Errorf("invalid CVE-ID format: %s", cveID)
 	}
 
-	pkgDir := filepath.Join(c.VulnListDir, dirName, pkgName)
+	// The package name and CVE-ID come from the feed and become the
+	// directory and file name, so neither may escape the release directory.
+	pkgDir, err := utils.SafeJoin(filepath.Join(c.VulnListDir, dirName), pkgName)
+	if err == nil {
+		err = utils.ValidatePathComponent(cveID)
+	}
+	if err != nil {
+		log.Printf("Skip Photon entry with an unsafe path: %v", err)
+		return nil
+	}
 	fileName := fmt.Sprintf("%s.json", cveID)
 	if err := utils.WriteJSON(c.AppFs, pkgDir, fileName, cve); err != nil {
 		return xerrors.Errorf("failed to write file: %w", err)

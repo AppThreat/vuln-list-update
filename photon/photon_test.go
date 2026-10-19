@@ -198,3 +198,51 @@ func TestConfig_Update(t *testing.T) {
 		})
 	}
 }
+
+// Release names, package names and CVE-IDs all come from the feed and become
+// paths; the release directory is even removed before it is rewritten. Unsafe
+// values must be skipped without touching anything outside the photon tree.
+func TestConfig_Update_UnsafePaths(t *testing.T) {
+	versions := `{"branches": ["1.0", "..", "../nvd", "x/../../y", ""]}`
+	advisories := `[
+  {"cve_id": "CVE-2099-0001", "pkg": "zlib", "cve_score": 7.5, "aff_ver": "all versions before 1.2.8-5.ph1 are vulnerable", "res_ver": "1.2.8-5.ph1"},
+  {"cve_id": "CVE-2099-0002", "pkg": "../../nvd/2099", "cve_score": 7.5, "aff_ver": "NA", "res_ver": "1.0-1.ph1"},
+  {"cve_id": "CVE-2099-0003", "pkg": "..", "cve_score": 7.5, "aff_ver": "NA", "res_ver": "1.0-1.ph1"},
+  {"cve_id": "CVE-2099/../../../x-0004", "pkg": "zlib", "cve_score": 7.5, "aff_ver": "NA", "res_ver": "1.0-1.ph1"}
+]`
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/photon_cve_metadata/photon_versions.json":
+			_, _ = w.Write([]byte(versions))
+		case r.URL.Path == "/photon_cve_metadata/cve_data_photon1.0.json":
+			_, _ = w.Write([]byte(advisories))
+		default:
+			// any other release resolves to an empty, valid advisory list
+			_, _ = w.Write([]byte("[]"))
+		}
+	}))
+	defer ts.Close()
+
+	appFs := afero.NewMemMapFs()
+	otherSource := "/tmp/nvd/2099/CVE-2099-9999.json"
+	require.NoError(t, afero.WriteFile(appFs, otherSource, []byte("{}"), 0600))
+
+	c := photon.Config{
+		VulnListDir: "/tmp",
+		URL:         ts.URL + "/photon_cve_metadata/",
+		AppFs:       appFs,
+		Retry:       0,
+	}
+	require.NoError(t, c.Update())
+
+	var files []string
+	err := afero.Walk(appFs, "/", func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		files = append(files, path)
+		return nil
+	})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{otherSource, "/tmp/photon/1.0/zlib/CVE-2099-0001.json"}, files)
+}

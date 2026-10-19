@@ -117,14 +117,13 @@ func (c Config) Update() error {
 			return xerrors.Errorf("failed to decode SUSE XML (%s): %w", filename, err)
 		}
 
-		dir := filepath.Join(cvrfDir, suseDir, osName)
-		if err = c.saveCvrfPerYear(dir, cv.Tracking.ID, cv); err != nil {
+		if err = c.saveCvrfPerYear(osName, cv.Tracking.ID, cv); err != nil {
 			return xerrors.Errorf("failed to save CVRF: %w", err)
 		}
 	}
 }
 
-func (c Config) saveCvrfPerYear(dirName string, cvrfID string, data Cvrf) error {
+func (c Config) saveCvrfPerYear(osName string, cvrfID string, data Cvrf) error {
 	s := strings.Split(cvrfID, "-")
 	if len(s) < 4 {
 		log.Printf("invalid CVRF-ID format: %s", cvrfID)
@@ -137,8 +136,20 @@ func (c Config) saveCvrfPerYear(dirName string, cvrfID string, data Cvrf) error 
 		return nil
 	}
 
-	yearDir := filepath.Join(c.VulnListDir, dirName, year)
-	fileName := fmt.Sprintf("%s.json", strings.Replace(cvrfID, ":", "-", 1))
+	// The OS name comes from the archive entry name and the year and file
+	// name from the document's tracking ID, so none of them may step outside
+	// the cvrf/suse tree.
+	advisoryID := strings.Replace(cvrfID, ":", "-", 1)
+	yearDir, err := utils.SafeJoin(filepath.Join(c.VulnListDir, cvrfDir, suseDir), osName, year)
+	if err == nil {
+		err = utils.ValidatePathComponent(advisoryID)
+	}
+	if err != nil {
+		log.Printf("skip CVRF with an unsafe path: %v", err)
+		return nil
+	}
+
+	fileName := fmt.Sprintf("%s.json", advisoryID)
 	if err := utils.WriteJSON(c.AppFs, yearDir, fileName, data); err != nil {
 		return xerrors.Errorf("failed to write file: %w", err)
 	}
