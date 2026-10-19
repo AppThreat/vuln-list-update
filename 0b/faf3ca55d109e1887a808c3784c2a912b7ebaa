@@ -1,0 +1,19 @@
+.github/workflows/squash-probe.yml
+  s_0417f7ab5a351c::t_7d7713486d97fe 1-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0bfaf3ca55d109e1887a808c3784c2a912b7ebaa",
+  "prompts": {},
+  "sessions": {
+    "s_0417f7ab5a351c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d133fbd-49f0-47a2-89d8-f4b2717d41b1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
